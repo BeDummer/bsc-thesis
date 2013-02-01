@@ -1,0 +1,17 @@
+//file "params"
+
+const double C_rate= 1.; // [Hz]
+const double C_dt= .001; // [sec]
+const int C_ndt=65536;
+const int C_ndt_mu=32768;//16384 ;
+const double C_taum= .1; // [sec]
+const double C_eps= .001;
+const int C_N_neuron=5 ;
+const int C_N_Gen=1 ;
+
+const double C_tol_mu=C_rate/100;
+const double C_T_max=C_dt*(C_ndt-1);
+const double C_T_mu=C_dt*(C_ndt_mu-1);
+const int C_size_powspe=C_ndt/2+1;
+
+const double M2_PI=2*M_PI;
