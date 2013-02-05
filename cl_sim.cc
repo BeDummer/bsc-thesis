@@ -118,9 +118,9 @@ double mutest(double r_0, double T_test, double tol_mu, double dt, double taum, 
 //		test.clearISI();
 		test.lif_neuron(mid,dt,taum,eps,N,I_diff);
 		r=test.rate();
-//* T */		cout << mid << "\t" << r << endl;
+/* T */		cout << mid << "\t" << r << endl;
 	}
-/* T */	cout << mid << "\t" << r << endl;
+//* T */	cout << mid << "\t" << r << endl;
 	return mid;
 }
 

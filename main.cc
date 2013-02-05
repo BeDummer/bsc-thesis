@@ -26,9 +26,11 @@ void cpNcl_d_arr(double *arr_src, double *arr_trgt, int size) // Copy Source-Arr
 	}
 }
 
-void calc_I_diff(double* I_diff, double const* S, int N,double T_max, fftw_plan p, unsigned long int id, time_t now)
+void calc_I_diff(double* I_diff, double const* S, int N,double dt, fftw_plan p, unsigned long int id, time_t now)
 {
 	int size=N/2;
+	double df=1/(dt*N);
+	double T_max= dt*(N-1);
 //	double* a_n=new double[size];
 //	double* phi_n=new double[size];
 	double a_n, phi_n;
@@ -40,7 +42,7 @@ void calc_I_diff(double* I_diff, double const* S, int N,double T_max, fftw_plan 
 	I_diff[0]=0;
 	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,(T_max*S[size]));
 	for (unsigned int i=1;i<size;i++){
-		a_n=gsl_ran_gaussian_ziggurat(rng,(T_max*S[i+1]));
+		a_n=gsl_ran_gaussian_ziggurat(rng,(T_max*S[i]));
 		phi_n=M2_PI*drand48();
 		I_diff[i]=a_n*cos(phi_n);
 		I_diff[N-i]=a_n*sin(phi_n);
@@ -53,7 +55,7 @@ void calc_I_diff(double* I_diff, double const* S, int N,double T_max, fftw_plan 
 
 	for (unsigned int i = 0; i < N; i++)
 	{
-		I_diff[i]=I_diff[i]/sqrt(N);
+		I_diff[i]=df*I_diff[i];//sqrt(N);
 		mean+=I_diff[i]/N;
 	}
 
@@ -61,7 +63,7 @@ void calc_I_diff(double* I_diff, double const* S, int N,double T_max, fftw_plan 
 
 	for (unsigned int i = 0; i < N; i++)
 	{
-		std_dev+=(mean-I_diff[i])*(mean-I_diff[i])/(N-1);
+		std_dev+=(0-I_diff[i])*(0-I_diff[i])/(N-1);
 	}
 	
 	cout << "Mean I= " << mean << "\t Std.dev. I= " << std_dev << endl;
@@ -112,13 +114,13 @@ int main()
 		{
 /* T */			cout << "Gen: " << i_gen << endl;			
 /* T */			tstart=clock();
-			cout << "sigma^2 (int S)= " << int_powspe(powspe_old, C_size_powspe, (1./(C_ndt*C_dt))) << endl;
+			cout << "sigma^2 (integral S)= " << int_powspe(powspe_old, C_size_powspe, (1./(C_ndt*C_dt))) << endl;
 			for (unsigned int i_neuron = 0; i_neuron < C_N_neuron; i_neuron++)
 			{
 /* T */				cout << "Neuron: " << i_neuron << endl;			
 			/* generate Random-Numbers&Diffusion-Current*/
 //				I_input=new double[C_ndt];
-				calc_I_diff(I_input, powspe_old, C_ndt,C_T_max, plan_I_input, ((i_gen+1)*(i_neuron+1)), now);
+				calc_I_diff(I_input, powspe_old, C_ndt,C_dt, plan_I_input, ((i_gen+1)*(i_neuron+1)), now);
 
 //				interval.clearISI();
 			/* define mu */
@@ -149,7 +151,7 @@ int main()
 		/* safe Powerspectrum, mu's and rate's*/
 //* T */			cout << "Start Saving " << endl;
 //* T */			tstart = clock();
-			buffer << "dt= " << C_dt << "\t N= " << C_ndt << "\t tau= " << C_taum << "\t C_eps= " << C_eps << "\t C_N_neuron= " << C_N_neuron << "\n \n mu \t \t rate \n" << mu_gen << "\t" << rate_gen << "\n \n";
+			buffer << "dt\t" << "N\t" << "tau\t" << "C_eps\t" << "C_N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_taum << "\t" << C_eps << "\t" << C_N_neuron << "\n\nmu\t\trate\n" << mu_gen << "\t" << rate_gen << "\n\n";
 
 /*			for (unsigned int i_safe = 0; i_safe < C_N_neuron; i_safe++)
 			{
