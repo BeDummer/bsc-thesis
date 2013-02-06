@@ -10,7 +10,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <time.h>
-#include "params"
+#include "params.hh"
 #include <iostream>
 #include <fstream>
 #include <string>

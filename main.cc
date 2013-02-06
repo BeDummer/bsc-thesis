@@ -31,8 +31,6 @@ void calc_I_diff(double* I_diff, double const* S, int N,double dt, fftw_plan p, 
 	int size=N/2;
 	double df=1/(dt*N);
 	double T_max= dt*(N-1);
-//	double* a_n=new double[size];
-//	double* phi_n=new double[size];
 	double a_n, phi_n;
 	unsigned long int init= id*static_cast<unsigned long>(now);
 	srand48(init);
@@ -40,9 +38,9 @@ void calc_I_diff(double* I_diff, double const* S, int N,double dt, fftw_plan p, 
 	gsl_rng_set (rng,init);
 
 	I_diff[0]=0;
-	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,(T_max*S[size]));
+	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*S[size]));
 	for (unsigned int i=1;i<size;i++){
-		a_n=gsl_ran_gaussian_ziggurat(rng,(T_max*S[i]));
+		a_n=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*S[i]));
 		phi_n=M2_PI*drand48();
 		I_diff[i]=a_n*cos(phi_n);
 		I_diff[N-i]=a_n*sin(phi_n);
@@ -52,21 +50,16 @@ void calc_I_diff(double* I_diff, double const* S, int N,double dt, fftw_plan p, 
 	fftw_execute(p);
 	
 	double mean=0;
-
-	for (unsigned int i = 0; i < N; i++)
-	{
-		I_diff[i]=df*I_diff[i];//sqrt(N);
-		mean+=I_diff[i]/N;
-	}
-
 	double std_dev=0;
 
 	for (unsigned int i = 0; i < N; i++)
 	{
-		std_dev+=(0-I_diff[i])*(0-I_diff[i])/(N-1);
+		I_diff[i]=df*I_diff[i];
+		mean+=I_diff[i];
+		std_dev+=I_diff[i]*I_diff[i];
 	}
-	
-	cout << "Mean I= " << mean << "\t Std.dev. I= " << std_dev << endl;
+
+	cout << "Mean I= " << (mean/N) << "\t Std.dev. I= " << (std_dev/N) << endl;
 }
 
 double int_powspe(double* powspe, int size, double df)
@@ -74,9 +67,9 @@ double int_powspe(double* powspe, int size, double df)
 	double integral=0;
 	for (unsigned int i = 1; i < (size-1); i++)
 	{
-		integral+=powspe[i]*df;
+		integral+=powspe[i];
 	}
-	return integral;
+	return (2*integral*df);
 }
 
 int main()
@@ -92,6 +85,8 @@ int main()
 	double rate_gen=0.;
 	ISI interval(C_T_max, C_rate);
 	
+	unsigned long int rand_id=0;
+
 	stringstream buffer;
 	ofstream file;
 	char date[18];
@@ -120,7 +115,8 @@ int main()
 /* T */				cout << "Neuron: " << i_neuron << endl;			
 			/* generate Random-Numbers&Diffusion-Current*/
 //				I_input=new double[C_ndt];
-				calc_I_diff(I_input, powspe_old, C_ndt,C_dt, plan_I_input, ((i_gen+1)*(i_neuron+1)), now);
+				rand_id++;
+				calc_I_diff(I_input, powspe_old, C_ndt,C_dt, plan_I_input, rand_id, now);
 
 //				interval.clearISI();
 			/* define mu */
