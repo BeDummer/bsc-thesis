@@ -4,9 +4,10 @@
 
 /*************************************************/
 
-void ISI::lif_neuron(double mu, double dt, double taum, double eps, double N, const double* I_diff)
+void ISI::lif_neuron(const double mu, const double dt, const double taum, const double eps, const int N, const double* I_diff) // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) with fire-and-reset rule and save the interspike-interval-times
 {
-	double cons=dt/taum, v=0.;
+	const double cons=dt/taum;
+	double v=0.;
 	int T=0;
 	isi_.clear();
 	for (unsigned int t=0; t<N; t++)
@@ -28,35 +29,21 @@ double ISI::rate()
 	return r;
 }
 
-/**********************************************************************
-double ISI::I_diff(double time, double dt, int N, const Random& randval)
-{
-	double I=0;
-	double df=1/(dt*N);
-	for (unsigned int i=0;i<(N/2);i++){
-		I+=randval.a_n(i) *cos(df*(i+1)*time-randval.phi_n(i));
-	}
-
-	return I;
-}
-*********************************************************************/
-
-
 /******************************************************/
 
-
-void powerspectrum(double* spect, const ISI& isi_train, int N, double dt)
+void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt) // calculate the powerspectrum of realisation "isi_train"
 {
-	int size_powspe=N/2+1;
+	const unsigned int size_powspe=N/2+1, isi_size=isi_train.isi_.size();
 	double train[N];
-	double fak=dt/(N-1), rec_dt=1/dt;
+	const double fak=dt/(N-1), rec_dt=1/dt;
 
-	unsigned int count=0, j=0, isi_size=isi_train.isi_.size();
+	unsigned int count=0, j=0;
 
 	fftw_plan plan_fft;
 	static char* fft_wisdom;
 	static bool wisdom=false;
 
+/* check for wisdom from earlier ffts*/
 	if (wisdom)
 	{
 		fftw_import_wisdom_from_string(fft_wisdom);
@@ -64,6 +51,7 @@ void powerspectrum(double* spect, const ISI& isi_train, int N, double dt)
 	} else
 		plan_fft = fftw_plan_r2r_1d(N, train, train, FFTW_R2HC, FFTW_MEASURE | FFTW_DESTROY_INPUT);
 
+/* compute spiketrain from isi-times-train */
 	for (unsigned int i=0; i<N; i++) {
 		if (count<isi_size){
 			if (j<isi_train.isi(count)) {
@@ -85,12 +73,15 @@ void powerspectrum(double* spect, const ISI& isi_train, int N, double dt)
 /**/		}
 /* T */		cout << "Train-rate= " << rate << endl;
 
+/* fourier-transform the spiketrain */
 	fftw_execute(plan_fft);
 	spect[0]=train[0];
 	spect[size_powspe-1]=train[N/2];
+
 	for (unsigned int i=1; i<(size_powspe-1); i++)
-		spect[i]=(train[i]*train[i]+train[N-i]*train[N-i])*fak;
-	
+		spect[i]=(train[i]*train[i]+train[N-i]*train[N-i])*fak; // calculate the absolute value squared divided by the simulation time
+
+/* save wisdom of the first fft */
 	if (!wisdom) 
 	{
 		fft_wisdom=fftw_export_wisdom_to_string();
@@ -102,7 +93,7 @@ void powerspectrum(double* spect, const ISI& isi_train, int N, double dt)
 
 /**************************************************************/
 
-double mutest(double r_0, double T_test, double tol_mu, double dt, double taum, double eps, double N, const double* I_diff)
+double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const double taum, const double eps, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection)
 {
 	ISI test(T_test, r_0);
 	double min=-5. , max=5. , mid=(max+min)/2.;
@@ -115,7 +106,6 @@ double mutest(double r_0, double T_test, double tol_mu, double dt, double taum, 
     		else
       			min=mid;
 		mid=(max+min)/2;
-//		test.clearISI();
 		test.lif_neuron(mid,dt,taum,eps,N,I_diff);
 		r=test.rate();
 //* T */		cout << mid << "\t" << r << endl;
@@ -123,47 +113,3 @@ double mutest(double r_0, double T_test, double tol_mu, double dt, double taum, 
 /* T */	cout << mid << "\t" << r << endl;
 	return mid;
 }
-
-/*****************************************************
-
-Power Power::powerspectrum(const Spike& spiketrain)
-{
-	Power S();
-	int size_powspe=ndt_/2+1;
-	fftw_plan p;
-	fftw_complex *outfft;
-	outfft = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * size_powspe);
-	p = fftw_plan_dft_r2c_1d(ndt_, spiketrain.train, outfft, FFTW_ESTIMATE);
-
-	fftw_execute(p);
-
-	for (unsigned int i=0; i<size_powspe; i++)
-		S.spect_[i]=outfft[i][0]*outfft[i][0]+outfft[i][1]*outfft[i][1];
-	
-	fftw_free(outfft);
-	fftw_destroy_plan(p);
-	
-	return S;
-	~S;
-}
-
-/*********************************************************
-
-void Spike::isi_spike(const ISI& isi_train)
-{
-	unsigned int count=0, j=0, isi_size=isi_train.isi_.size();
-	for (unsigned int i=0; i<ndt_; i++) {
-		if (count<isi_size){
-			if (j<isi_train.isi(count)) {
-				train_[i]=0;
-				j++;
-			} else {
-				train_[i]=1;
-				count++;
-				j=0;
-			}
-		} else 
-			train_[i]=0;
-}
-
-/************************************************************/
