@@ -76,10 +76,10 @@ int main()
 				calc_I_diff(I_input, powspe_old, C_ndt,C_dt, plan_I_input, rand_id, now);
 
 			/* define mu */
-				mu=mutest(C_rate, C_T_mu, C_tol_mu, C_dt, C_taum, C_eps, C_ndt_mu, I_input);
+				mu=mutest(C_rate, C_T_mu, C_tol_mu, C_dt, C_eps, C_tau_r__dt, C_ndt_mu, I_input);
 
 			/* create ISI-train */
-				interval.lif_neuron(mu, C_dt, C_taum, C_eps, C_ndt, I_input);
+				interval.lif_neuron(mu, C_dt, C_eps, C_tau_r__dt, C_ndt, I_input);
 
 			/* calculate Powerspectrum - normalized to the rate */
 				S_temp= new double[C_size_powspe];
@@ -100,7 +100,7 @@ int main()
 
 
 		/* safe Powerspectrum, mu and rate*/
-			buffer << "dt\t" << "N\t" << "tau\t" << "C_eps\t" << "C_N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_taum << "\t" << C_eps << "\t" << C_N_neuron << "\n\nmu\t\trate\n" << mu_gen << "\t" << rate_gen << "\n\n";
+			buffer << "dt\t" << "N\t" << "D\t" << "eps\t" << "tau_r\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_D << "\t" << C_eps <<"\t" << C_tau_r << "\t" << C_N_neuron << "\n\nmu\t\trate\n" << mu_gen << "\t" << rate_gen << "\n\n";
 
 			for (unsigned int i_safe = 0; i_safe < C_size_powspe; i_safe++)
 			{

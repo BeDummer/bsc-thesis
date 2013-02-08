@@ -4,19 +4,18 @@
 
 /*************************************************/
 
-void ISI::lif_neuron(const double mu, const double dt, const double taum, const double eps, const int N, const double* I_diff) // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) with fire-and-reset rule and save the interspike-interval-times
+void ISI::lif_neuron(const double mu, const double dt, const double eps, const int tau_r__dt, const int N, const double* I_diff) // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) --> (tau_m=1) with fire-and-reset rule (v=1 --> spike at t --> v(t+tau_r)=0) and save the interspike-interval-times
 {
-	const double cons=dt/taum;
 	double v=0.;
 	int T=0;
 	isi_.clear();
 	for (unsigned int t=0; t<N; t++)
 		{
-			v+= (-v+mu+eps*I_diff[t])*cons; //Euler-step
+			v+= (-v+mu+eps*I_diff[t])*dt; //Euler-step
 			if (v>=1.)
 		    	{
 		      		isi_.push_back(T); // append 'T' to vector 'isi'
-				T=0;
+				T=tau_r__dt;
 				v=0.;
 		    	} else
 				T++;
@@ -93,12 +92,12 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 /**************************************************************/
 
-double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const double taum, const double eps, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection)
+double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const double eps, const int tau_r__dt, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection)
 {
 	ISI test(T_test, r_0);
 	double min=-5. , max=5. , mid=(max+min)/2.;
 	
-	test.lif_neuron(mid,dt,taum,eps,N,I_diff);
+	test.lif_neuron(mid,dt,eps,tau_r__dt,N,I_diff);
 	double r=test.rate();
 	while (fabs(r_0-r)>tol_mu) {
 		if (r>r_0)
@@ -106,7 +105,7 @@ double mutest(const double r_0, const double T_test, const double tol_mu, const 
     		else
       			min=mid;
 		mid=(max+min)/2;
-		test.lif_neuron(mid,dt,taum,eps,N,I_diff);
+		test.lif_neuron(mid,dt,eps,tau_r__dt,N,I_diff);
 		r=test.rate();
 //* T */		cout << mid << "\t" << r << endl;
 	}
