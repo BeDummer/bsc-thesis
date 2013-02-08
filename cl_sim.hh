@@ -33,10 +33,11 @@ class ISI {
 	friend void powerspectrum(double* , const ISI&, const int, const double);
 };
 
-void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt);
+void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt); // calculate the powerspectrum of realisation "isi_train"
 
-double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const double taum, const double eps, const int N, const double* I_diff);
+double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const double taum, const double eps, const int N, const double* I_diff); // calculate mu for given rate r_0 (bisection)
 
+void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
 /**************************************************************************/
 
 #endif //_cl_sim_hh_

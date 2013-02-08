@@ -113,3 +113,40 @@ double mutest(const double r_0, const double T_test, const double tol_mu, const 
 /* T */	cout << mid << "\t" << r << endl;
 	return mid;
 }
+
+/**************************************************************/
+
+void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const fftw_plan p, const unsigned long int id, const time_t now) // calculate diffusion-current for one realisation
+{
+	const int size=N/2;
+	const double df=1/(dt*N), T_max= dt*(N-1); 
+	double a_n, phi_n;
+	unsigned long int init= id+static_cast<unsigned long>(now);
+	srand48(init);
+  	gsl_rng *rng=gsl_rng_alloc(gsl_rng_taus2);
+	gsl_rng_set (rng,init);
+
+/* generate current in fourier-domain with the statistics of the input-powerspectrum*/
+	I_diff[0]=0;
+	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*S[size]));
+	for (unsigned int i=1;i<size;i++){
+		a_n=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*S[i]));
+		phi_n=M2_PI*drand48();
+		I_diff[i]=a_n*cos(phi_n);
+		I_diff[N-i]=a_n*sin(phi_n);
+	}
+	gsl_rng_free (rng);
+
+/* fourier-transform the current */
+	fftw_execute(p);
+	
+/* T */	double mean=0;
+/* T */	double std_dev=0;
+	for (unsigned int i = 0; i < N; i++)
+	{
+		I_diff[i]=df*I_diff[i];
+/* T */		mean+=I_diff[i];
+/* T */		std_dev+=I_diff[i]*I_diff[i];
+	}
+/* T */	cout << "Mean I= " << (mean/N) << "\t Std.dev. I= " << (std_dev/N) << endl;
+}
