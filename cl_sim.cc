@@ -12,11 +12,12 @@ void ISI::lif_neuron(const double mu, const double dt, const double eps, const i
 	for (unsigned int t=0; t<N; t++)
 		{
 			v+= (-v+mu+eps*I_diff[t])*dt; //Euler-step
-			if (v>=1.)
+			if (v>=1.) // fire-and-reset rule
 		    	{
 		      		isi_.push_back(T); // append 'T' to vector 'isi'
-				T=tau_r__dt;
-				v=0.;
+				T=tau_r__dt; // initial value for waiting time: absolute refractory period
+				v=0.; // resetting the voltage
+				t+=tau_r__dt; // nothing happens in absolute refractory period
 		    	} else
 				T++;
 		}  
@@ -64,18 +65,17 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 		} else 
 			train[i]=0;
 	}
-
-/* T */		double rate=0;
-/**/		for (unsigned int i = 0; i < N; i++)
-/**/		{
-/**/			rate+=train[i]/(N-1);
-/**/		}
-/* T */		cout << "Train-rate= " << rate << endl;
+//* T */		double rate=0;
+//**/		for (unsigned int i = 0; i < N; i++)
+//**/		{
+//**/			rate+=train[i]/(N-1);
+//**/		}
+//* T */		cout << "Train-rate= " << rate << endl;
 
 /* fourier-transform the spiketrain */
 	fftw_execute(plan_fft);
-	spect[0]=train[0];
-	spect[size_powspe-1]=train[N/2];
+	spect[0]=train[0]*train[0]*fak;
+	spect[size_powspe-1]=train[N/2]*train[N/2]*fak;
 
 	for (unsigned int i=1; i<(size_powspe-1); i++)
 		spect[i]=(train[i]*train[i]+train[N-i]*train[N-i])*fak; // calculate the absolute value squared divided by the simulation time
@@ -139,13 +139,13 @@ void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, 
 /* fourier-transform the current */
 	fftw_execute(p);
 	
-/* T */	double mean=0;
-/* T */	double std_dev=0;
+//* T */	double mean=0;
+//* T */	double std_dev=0;
 	for (unsigned int i = 0; i < N; i++)
 	{
 		I_diff[i]=df*I_diff[i];
-/* T */		mean+=I_diff[i];
-/* T */		std_dev+=I_diff[i]*I_diff[i];
+//* T */		mean+=I_diff[i];
+//* T */		std_dev+=I_diff[i]*I_diff[i];
 	}
-/* T */	cout << "Mean I= " << (mean/N) << "\t Std.dev. I= " << (std_dev/N) << endl;
+//* T */	cout << "Mean I= " << (mean/N) << "\t Std.dev. I= " << (std_dev/N) << endl;
 }
