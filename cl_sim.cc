@@ -4,14 +4,14 @@
 
 /*************************************************/
 
-void ISI::lif_neuron(const double mu, const double dt, const double eps, const int tau_r__dt, const int N, const double* I_diff) // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) --> (tau_m=1) with fire-and-reset rule (v=1 --> spike at t --> v(t+tau_r)=0) and save the interspike-interval-times
+void ISI::lif_neuron(const double mu, const double dt, const int tau_r__dt, const int N, const double* I_diff) // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) --> (tau_m=1) with fire-and-reset rule (v=1 --> spike at t --> v(t+tau_r)=0) and save the interspike-interval-times
 {
 	double v=0.;
 	int T=0;
 	isi_.clear();
 	for (unsigned int t=0; t<N; t++)
 		{
-			v+= (-v+mu+eps*I_diff[t])*dt; //Euler-step
+			v+= (-v+mu+I_diff[t])*dt; //Euler-step
 			if (v>=1.) // fire-and-reset rule
 		    	{
 		      		isi_.push_back(T); // append 'T' to vector 'isi'
@@ -92,12 +92,12 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 /**************************************************************/
 
-double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const double eps, const int tau_r__dt, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection)
+double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection)
 {
 	ISI test(T_test, r_0);
 	double min=-5. , max=5. , mid=(max+min)/2.;
 	
-	test.lif_neuron(mid,dt,eps,tau_r__dt,N,I_diff);
+	test.lif_neuron(mid,dt,tau_r__dt,N,I_diff);
 	double r=test.rate();
 	while (fabs(r_0-r)>tol_mu) {
 		if (r>r_0)
@@ -105,7 +105,7 @@ double mutest(const double r_0, const double T_test, const double tol_mu, const 
     		else
       			min=mid;
 		mid=(max+min)/2;
-		test.lif_neuron(mid,dt,eps,tau_r__dt,N,I_diff);
+		test.lif_neuron(mid,dt,tau_r__dt,N,I_diff);
 		r=test.rate();
 //* T */		cout << mid << "\t" << r << endl;
 	}
@@ -115,7 +115,7 @@ double mutest(const double r_0, const double T_test, const double tol_mu, const 
 
 /**************************************************************/
 
-void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const fftw_plan p, const unsigned long int id, const time_t now) // calculate diffusion-current for one realisation
+void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const double eps, const double r_0, const fftw_plan p, const unsigned long int id, const time_t now) // calculate diffusion-current for one realisation
 {
 	const int size=N/2;
 	const double df=1/(dt*N), T_max= dt*(N-1); 
@@ -127,9 +127,9 @@ void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, 
 
 /* generate current in fourier-domain with the statistics of the input-powerspectrum*/
 	I_diff[0]=0;
-	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*S[size]));
+	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*eps*eps*S[size]));
 	for (unsigned int i=1;i<size;i++){
-		a_n=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*S[i]));
+		a_n=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*eps*eps*S[i]));
 		phi_n=M2_PI*drand48();
 		I_diff[i]=a_n*cos(phi_n);
 		I_diff[N-i]=a_n*sin(phi_n);
@@ -143,7 +143,7 @@ void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, 
 //* T */	double std_dev=0;
 	for (unsigned int i = 0; i < N; i++)
 	{
-		I_diff[i]=df*I_diff[i];
+		I_diff[i]=eps*r_0+df*I_diff[i];
 //* T */		mean+=I_diff[i];
 //* T */		std_dev+=I_diff[i]*I_diff[i];
 	}

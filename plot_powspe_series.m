@@ -4,7 +4,7 @@ clear all
 
 Gen=5;
 
-filename='data/2013-02-08_17-32__';
+filename='data/2013-02-08_19-21__';
 filename_tmp=[filename '0.dat'];
 temp=importdata(filename_tmp,'\t',1);
 
