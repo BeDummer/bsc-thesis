@@ -36,19 +36,22 @@ double int_powspe(const double* powspe, const int size, const double df) // calc
 /***********************************************************************/
 int main()
 {
+/* variables for calculation */
 	double powspe_old[C_size_powspe]={0.0};
 	double powspe_new[C_size_powspe]={0.0};
 	double* S_temp;
 	double* I_input;
 	double mu, mu_gen=0., rate_gen=0.;
 	ISI interval(C_T_max, C_rate);
-	
-	unsigned long int rand_id=0;
 
+/* variables for initialization of random number generators */	
+	unsigned long int rand_id=0;
+	const time_t now=time(NULL);
+
+/* variables for saving data*/
 	stringstream buffer;
 	ofstream file;
 	char date[18];
-	const time_t now=time(NULL);
 	strftime(date,18, "%Y-%m-%d_%H-%M",localtime(&now));
 	stringstream filename;
 	string filename_tmp;
@@ -57,7 +60,7 @@ int main()
 	I_input=new double[C_ndt];
 	fftw_plan plan_I_input = fftw_plan_r2r_1d(C_ndt, I_input, I_input, FFTW_HC2R, FFTW_MEASURE | FFTW_DESTROY_INPUT);
 
-/* T */	double time, tstart;
+//* T */	double time, tstart;
 
 	/* generate start-powerspectrum */
 		whitenoise_PS(powspe_old,C_size_powspe,C_rate);
@@ -99,7 +102,7 @@ int main()
 //* T */			time=clock()-tstart;
 //* T */			cout << "Time im msec: " << (1000*time/CLOCKS_PER_SEC) << endl;
 
-		/* safe Powerspectrum, mu and rate*/
+		/* write Powerspectrum, mu and rate into buffer */
 			buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << "\t" << C_eps <<"\t" << C_tau_r << "\t" << C_N_neuron << "\n\nmu\t\trate\n" << mu_gen << "\t" << rate_gen << "\n\n";
 
 			for (unsigned int i_safe = 0; i_safe < C_size_powspe; i_safe++)
@@ -110,13 +113,14 @@ int main()
 			filename << "data/" << date << "__" << i_gen << ".dat";
 			filename_tmp=filename.str();
 
+		/* saving data to file from buffer */
 			file.open(filename_tmp.c_str());
 				file << buffer.str();
 			file.close();
 
+		/* resetting variables */
 			filename.str("");
 			buffer.str("");
-
 			cpNcl_d_arr(powspe_new, powspe_old, C_size_powspe);
 			rate_gen=0.;
 			mu_gen=0.;

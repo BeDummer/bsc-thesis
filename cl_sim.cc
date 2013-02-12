@@ -11,7 +11,7 @@ void ISI::lif_neuron(const double mu, const double dt, const int tau_r__dt, cons
 	isi_.clear();
 	for (unsigned int t=0; t<N; t++)
 		{
-			v+= (-v+mu+I_diff[t])*dt; //Euler-step
+			v+= (-v+mu+I_diff[t])*dt; // Euler-step
 			if (v>=1.) // fire-and-reset rule
 		    	{
 		      		isi_.push_back(T); // append 'T' to vector 'isi'
@@ -92,7 +92,7 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 /**************************************************************/
 
-double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection)
+double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection-algorithm)
 {
 	ISI test(T_test, r_0);
 	double min=-5. , max=5. , mid=(max+min)/2.;
@@ -125,7 +125,7 @@ void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, 
   	gsl_rng *rng=gsl_rng_alloc(gsl_rng_taus2);
 	gsl_rng_set (rng,init);
 
-/* generate current in fourier-domain with the statistics of the input-powerspectrum*/
+/* generate current in fourier-domain with the statistics of the input-powerspectrum */
 	I_diff[0]=0;
 	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*eps*eps*S[size]));
 	for (unsigned int i=1;i<size;i++){
@@ -141,6 +141,8 @@ void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, 
 	
 //* T */	double mean=0;
 //* T */	double std_dev=0;
+
+/* adding the average current */
 	for (unsigned int i = 0; i < N; i++)
 	{
 		I_diff[i]=eps*r_0+df*I_diff[i];
