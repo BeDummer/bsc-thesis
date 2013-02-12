@@ -9,18 +9,27 @@ void dzeros(double *arr, const int n) // write zeros in double-array
 		arr[i]=0;
 }
 /***********************************************************************/
-void whitenoise_PS(double *arr, const int n, const double r_0) // generates bandlimited white-noise powerspectrum with rate r_0 und cut-off frequency f_c=1/(2*C_dt)
-{
-	for (unsigned int i=0;i<n;i++)
-		arr[i]=r_0;
-}
-/***********************************************************************/
 void cpNcl_d_arr(double *arr_src, double *arr_trgt, const int size) // copy source-array to target-array and clear (set 0 values) source-array
 {
 	for (unsigned int i = 0; i < size; i++)
 	{
 		arr_trgt[i]=arr_src[i];
 		arr_src[i]=0;
+	}
+}
+/***********************************************************************/
+void whitenoise_PS(double *arr, const int n, const double r_0) // generate bandlimited white-noise powerspectrum with rate r_0 und cut-off frequency f_c=1/(2*C_dt)
+{
+	for (unsigned int i=0;i<n;i++)
+		arr[i]=r_0;
+}
+/***********************************************************************/
+void ornstein_PS(double *arr, const int N, const double df, const double tau, const double D) // generate powerspectrum of an ohrnstein-uhlenbeck-process
+{
+	double fak1=4.*tau*D, fak2=4.*M_PI*M_PI*df*df*tau*tau;
+	for (unsigned int i = 0; i < N; i++)
+	{
+		arr[i]=fak1/(1+i*i*fak2);
 	}
 }
 /***********************************************************************/
@@ -34,6 +43,30 @@ double int_powspe(const double* powspe, const int size, const double df) // calc
 	return (2*integral*df);
 }
 /***********************************************************************/
+void safe_powspe(const double* powspe, const double rate, const double mu, const int gen, const char* date) // saving powerspectrum to file
+{
+	stringstream buffer, filename;
+	string filename_tmp;
+	ofstream file;
+
+/* write Powerspectrum, mu, rate and constants into buffer */
+	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_N_neuron << "\n\nmu\t\trate\n" << mu << "\t" << rate << "\n\n";
+
+	for (unsigned int i = 0; i < C_size_powspe; i++)
+	{
+		buffer << (powspe[i]/rate) << endl;
+	}
+
+	filename << "data/" << date << "__" << gen << ".dat";
+	filename_tmp=filename.str();
+
+/* saving data to file from buffer */
+	file.open(filename_tmp.c_str());
+		file << buffer.str();
+	file.close();
+}
+/***********************************************************************/
+
 int main()
 {
 /* variables for calculation */
@@ -45,7 +78,7 @@ int main()
 	ISI interval(C_T_max, C_rate);
 
 /* variables for initialization of random number generators */	
-	unsigned long int rand_id=0;
+	unsigned long int rand_id=1;
 	const time_t now=time(NULL);
 
 /* variables for saving data*/
@@ -63,10 +96,12 @@ int main()
 //* T */	double time, tstart;
 
 	/* generate start-powerspectrum */
+		ornstein_PS(powspe_old, C_size_powspe, 1./(C_ndt*C_dt), .1, 1.);
 		whitenoise_PS(powspe_old,C_size_powspe,C_rate);
+		safe_powspe(powspe_old, C_rate, log(-1), 0, date);
 		dzeros(powspe_new, C_size_powspe);
 
-		for (unsigned int i_gen = 0; i_gen < C_N_Gen; i_gen++)
+		for (unsigned int i_gen = 1; i_gen <= C_N_Gen; i_gen++)
 		{
 /* T */			cout << "Gen: " << i_gen << endl;			
 //* T */			tstart=clock();
@@ -102,25 +137,10 @@ int main()
 //* T */			time=clock()-tstart;
 //* T */			cout << "Time im msec: " << (1000*time/CLOCKS_PER_SEC) << endl;
 
-		/* write Powerspectrum, mu and rate into buffer */
-			buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << "\t" << C_eps <<"\t" << C_tau_r << "\t" << C_N_neuron << "\n\nmu\t\trate\n" << mu_gen << "\t" << rate_gen << "\n\n";
-
-			for (unsigned int i_safe = 0; i_safe < C_size_powspe; i_safe++)
-			{
-				buffer << (powspe_new[i_safe]/rate_gen) << endl;
-			}
-
-			filename << "data/" << date << "__" << i_gen << ".dat";
-			filename_tmp=filename.str();
-
-		/* saving data to file from buffer */
-			file.open(filename_tmp.c_str());
-				file << buffer.str();
-			file.close();
-
+		/* saving powerspectrum, rate, mu and constants to file */
+			safe_powspe(powspe_new, rate_gen, mu_gen, i_gen, date);
+		
 		/* resetting variables */
-			filename.str("");
-			buffer.str("");
 			cpNcl_d_arr(powspe_new, powspe_old, C_size_powspe);
 			rate_gen=0.;
 			mu_gen=0.;

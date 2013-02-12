@@ -2,9 +2,9 @@
 
 clear all
 
-Gen=5;
+Gen=6;
 
-filename='data/2013-02-08_19-21__';
+filename='data/2013-02-12_16-52__';
 filename_tmp=[filename '0.dat'];
 temp=importdata(filename_tmp,'\t',1);
 
@@ -24,7 +24,7 @@ figure
 for i=0:1:(Gen-1)
 	filename_tmp=[filename int2str(i) '.dat'];
 	temp=importdata(filename_tmp,'',7);
-	S=temp.data(1:(length(temp.data())-1));
+	S=temp.data();
 
 	% computing averaged data for given binsize
 	for j=0:(length(f2)-1)

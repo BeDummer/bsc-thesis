@@ -6,8 +6,8 @@ const int C_ndt=262144;//524288;//131072;//65536; // number of timesteps in simu
 const int C_ndt_mu=131072;//65536;//32768;//16384; // number of timesteps in bisection
 const double C_eps=.2; // weight of Input-Current
 const double C_tau_r=.1; // absolute refractory period [sec]
-const int C_N_neuron=1000 ; // number of neurons per generation
-const int C_N_Gen=5 ; // number of layers in the feedforward-networt (generations)
+const int C_N_neuron=100 ; // number of neurons per generation
+const int C_N_Gen=1 ; // number of layers in the feedforward-networt (generations)
 
 const int C_tau_r__dt=C_tau_r/C_dt; // absolute refractory period [#timesteps]
 const double C_T_max=C_dt*(C_ndt-1); // simulation-time
