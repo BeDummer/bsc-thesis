@@ -2,7 +2,7 @@
 
 clear all
 
-filename='data/2013-02-12_17-38__1.dat';
+filename='data/2013-02-12_19-46__1.dat';
 temp=importdata(filename,'\t',1);
 
 dt=temp.data(1,1);

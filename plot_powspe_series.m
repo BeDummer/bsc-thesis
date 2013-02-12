@@ -4,7 +4,7 @@ clear all
 
 Gen=6;
 
-filename='data/2013-02-12_16-52__';
+filename='data/2013-02-12_19-04__';
 filename_tmp=[filename '0.dat'];
 temp=importdata(filename_tmp,'\t',1);
 
@@ -21,7 +21,7 @@ std_dev_S2=zeros(1,length(f2));
 
 figure
 
-for i=0:1:(Gen-1)
+for i=1:1:(Gen-1)
 	filename_tmp=[filename int2str(i) '.dat'];
 	temp=importdata(filename_tmp,'',7);
 	S=temp.data();
@@ -34,7 +34,7 @@ for i=0:1:(Gen-1)
 	end
 	% plotting averaged data
 	plot(f2(1:1000),S2(1:1000),lines{i+1})
-	if i==0
+	if i==1
 		hold on
 	end
 

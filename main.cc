@@ -43,18 +43,18 @@ double int_powspe(const double* powspe, const int size, const double df) // calc
 	return (2*integral*df);
 }
 /***********************************************************************/
-void safe_powspe(const double* powspe, const double rate, const double mu, const int gen, const char* date) // saving powerspectrum to file
+void safe_powspe(const double* powspe, const double rate, const double sigma, const double mu, const int gen, const char* date) // saving powerspectrum to file
 {
 	stringstream buffer, filename;
 	string filename_tmp;
 	ofstream file;
 
 /* write Powerspectrum, mu, rate and constants into buffer */
-	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_N_neuron << "\n\nmu\t\trate\n" << mu << "\t" << rate << "\n\n";
+	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_N_neuron << "\n\nmu\t\trate\t\tsigma\t\tCV\n" << mu << "\t" << rate << "\t" << sigma << "\t" << (sigma*rate) << "\n\n";
 
 	for (unsigned int i = 0; i < C_size_powspe; i++)
 	{
-		buffer << (powspe[i]/rate) << endl;
+		buffer << (powspe[i]) << endl;
 	}
 
 	filename << "data/" << date << "__" << gen << ".dat";
@@ -74,7 +74,7 @@ int main()
 	double powspe_new[C_size_powspe]={0.0};
 	double* S_temp;
 	double* I_input;
-	double mu, mu_gen=0., rate_gen=0.;
+	double mu, mu_gen=0., rate_gen=0., sigma_gen=0.;
 	ISI interval(C_T_max, C_rate);
 
 /* variables for initialization of random number generators */	
@@ -96,9 +96,9 @@ int main()
 //* T */	double time, tstart;
 
 	/* generate start-powerspectrum */
-		ornstein_PS(powspe_old, C_size_powspe, 1./(C_ndt*C_dt), .1, 1.);
+//		ornstein_PS(powspe_old, C_size_powspe, 1./(C_ndt*C_dt), C_tau, C_D);
 		whitenoise_PS(powspe_old,C_size_powspe,C_rate);
-		safe_powspe(powspe_old, C_rate, log(-1), 0, date);
+		safe_powspe(powspe_old, C_rate, log(-1), log(-1), 0, date);
 		dzeros(powspe_new, C_size_powspe);
 
 		for (unsigned int i_gen = 1; i_gen <= C_N_Gen; i_gen++)
@@ -131,18 +131,20 @@ int main()
 
 			/* calculate averages of rate and mu */
 				rate_gen+=interval.rate()/C_N_neuron;
+				sigma_gen+=interval.std_dev(C_dt)/C_N_neuron;
 				mu_gen+=mu/C_N_neuron;
 			}
 
 //* T */			time=clock()-tstart;
 //* T */			cout << "Time im msec: " << (1000*time/CLOCKS_PER_SEC) << endl;
 
-		/* saving powerspectrum, rate, mu and constants to file */
-			safe_powspe(powspe_new, rate_gen, mu_gen, i_gen, date);
+		/* saving powerspectrum, rate, sigma, mu and constants to file */
+			safe_powspe(powspe_new, rate_gen, sigma_gen, mu_gen, i_gen, date);
 		
 		/* resetting variables */
 			cpNcl_d_arr(powspe_new, powspe_old, C_size_powspe);
 			rate_gen=0.;
+			sigma_gen=0.;
 			mu_gen=0.;
 		}
 	delete[] I_input;

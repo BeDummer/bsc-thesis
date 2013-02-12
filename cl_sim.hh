@@ -30,6 +30,7 @@ class ISI {
 		int isi(int i) const {return isi_[i];};
 		void lif_neuron(const double mu, const double dt, const int tau_r__dt, const int N, const double* I_diff);
 		double rate();
+		double std_dev(const double dt);
 	friend void powerspectrum(double* , const ISI&, const int, const double);
 };
 

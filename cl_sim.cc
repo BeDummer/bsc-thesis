@@ -29,6 +29,16 @@ double ISI::rate()
 	return r;
 }
 
+double ISI::std_dev(const double dt)
+{
+	double T=1/(ISI::rate()), sigma=0;
+	int size=isi_.size();
+	for (unsigned int i = 0; i < size; i++)
+	{
+		sigma+=(T-isi_[i]*dt)*(T-isi_[i]*dt)/size;
+	}
+	return sqrt(sigma);
+}
 /******************************************************/
 
 void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt) // calculate the powerspectrum of realisation "isi_train"

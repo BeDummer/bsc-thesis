@@ -9,6 +9,9 @@ const double C_tau_r=.1; // absolute refractory period [sec]
 const int C_N_neuron=100 ; // number of neurons per generation
 const int C_N_Gen=1 ; // number of layers in the feedforward-networt (generations)
 
+const double C_D=5.; // diffusion coefficient for ornstein-uhlenbeck-powerspectrum
+const double C_tau=.5; // time constant for ornstein-uhlenbeck-powerspectrum
+
 const int C_tau_r__dt=C_tau_r/C_dt; // absolute refractory period [#timesteps]
 const double C_T_max=C_dt*(C_ndt-1); // simulation-time
 const double C_T_mu=C_dt*(C_ndt_mu-1); // bisection simulation-time
