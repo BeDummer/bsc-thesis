@@ -44,7 +44,7 @@ double ISI::std_dev(const double dt)
 void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt) // calculate the powerspectrum of realisation "isi_train"
 {
 	const unsigned int size_powspe=N/2+1, isi_size=isi_train.isi_.size();
-	double train[N];
+	double* train = new double[N];
 	const double fak=dt/(N-1), rec_dt=1/dt;
 
 	unsigned int count=0, j=0;
@@ -98,6 +98,7 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 	}
 
 	fftw_destroy_plan(plan_fft);
+	delete[] train;
 }
 
 /**************************************************************/
@@ -125,10 +126,10 @@ double mutest(const double r_0, const double T_test, const double tol_mu, const 
 
 /**************************************************************/
 
-void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const double eps, const double r_0, const fftw_plan p, const unsigned long int id, const time_t now) // calculate diffusion-current for one realisation
+void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const double eps, const double r_0, const double tau_s, const fftw_plan p, const unsigned long int id, const time_t now) // calculate diffusion-current for one realisation
 {
 	const int size=N/2;
-	const double df=1/(dt*N), T_max= dt*(N-1); 
+	const double df=1/(dt*N), T_max= dt*(N-1), fak1=T_max*eps*eps, fak2=4*M_PI*M_PI*df*df*tau_s*tau_s; 
 	double a_n, phi_n;
 	unsigned long int init= id+static_cast<unsigned long>(now);
 	srand48(init);
@@ -137,9 +138,9 @@ void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, 
 
 /* generate current in fourier-domain with the statistics of the input-powerspectrum */
 	I_diff[0]=0;
-	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*eps*eps*S[size]));
+	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(fak1*S[size]/(1+fak2*size*size)));
 	for (unsigned int i=1;i<size;i++){
-		a_n=gsl_ran_gaussian_ziggurat(rng,sqrt(T_max*eps*eps*S[i]));
+		a_n=gsl_ran_gaussian_ziggurat(rng,sqrt(fak1*S[i]/(1+fak2*i*i)));
 		phi_n=M2_PI*drand48();
 		I_diff[i]=a_n*cos(phi_n);
 		I_diff[N-i]=a_n*sin(phi_n);

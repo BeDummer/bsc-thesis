@@ -1,6 +1,5 @@
 // file "main.cc"
 
-#include "cl_sim.hh"
 #include "cl_sim.cc"
 /***********************************************************************/
 void dzeros(double *arr, const int n) // write zeros in double-array
@@ -50,7 +49,7 @@ void safe_powspe(const double* powspe, const double rate, const double sigma, co
 	ofstream file;
 
 /* write Powerspectrum, mu, rate and constants into buffer */
-	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_N_neuron << "\n\nmu\t\trate\t\tsigma\t\tCV\n" << mu << "\t" << rate << "\t" << sigma << "\t" << (sigma*rate) << "\n\n";
+	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\n" << C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\n\nmu\t\trate\t\tsigma\t\tCV\n" << mu << "\t" << rate << "\t" << sigma << "\t" << (sigma*rate) << "\n\n";
 
 	for (unsigned int i = 0; i < C_size_powspe; i++)
 	{
@@ -70,8 +69,8 @@ void safe_powspe(const double* powspe, const double rate, const double sigma, co
 int main()
 {
 /* variables for calculation */
-	double powspe_old[C_size_powspe]={0.0};
-	double powspe_new[C_size_powspe]={0.0};
+	double* powspe_old;
+	double* powspe_new;
 	double* S_temp;
 	double* I_input;
 	double mu, mu_gen=0., rate_gen=0., sigma_gen=0.;
@@ -89,16 +88,18 @@ int main()
 	stringstream filename;
 	string filename_tmp;
 
-/* create plan for fft in "calc_I_diff" */
-	I_input=new double[C_ndt];
-	fftw_plan plan_I_input = fftw_plan_r2r_1d(C_ndt, I_input, I_input, FFTW_HC2R, FFTW_MEASURE | FFTW_DESTROY_INPUT);
+	/* create plan for fft in "calc_I_diff" */
+		I_input=new double[C_ndt];
+		fftw_plan plan_I_input = fftw_plan_r2r_1d(C_ndt, I_input, I_input, FFTW_HC2R, FFTW_MEASURE | FFTW_DESTROY_INPUT);
 
 //* T */	double time, tstart;
 
 	/* generate start-powerspectrum */
-//		ornstein_PS(powspe_old, C_size_powspe, 1./(C_ndt*C_dt), C_tau, C_D);
-		whitenoise_PS(powspe_old,C_size_powspe,C_rate);
-		safe_powspe(powspe_old, C_rate, log(-1), log(-1), 0, date);
+		powspe_old=new double[C_size_powspe];
+//		ornstein_PS(powspe_old, C_size_powspe, 1./(C_ndt*C_dt), C_tau, C_D); safe_powspe(powspe_old, C_rate, C_tau, C_D, 0, date);
+		whitenoise_PS(powspe_old,C_size_powspe,C_rate); safe_powspe(powspe_old, C_rate, log(-1), log(-1), 0, date);
+		
+		powspe_new=new double[C_size_powspe];
 		dzeros(powspe_new, C_size_powspe);
 
 		for (unsigned int i_gen = 1; i_gen <= C_N_Gen; i_gen++)
@@ -111,7 +112,7 @@ int main()
 /* T */				cout << "Neuron: " << i_neuron << endl;			
 			/* generate Random-Numbers&Diffusion-Current*/
 				rand_id++;
-				calc_I_diff(I_input, powspe_old, C_ndt, C_dt, C_eps, C_rate, plan_I_input, rand_id, now);
+				calc_I_diff(I_input, powspe_old, C_ndt, C_dt, C_eps, C_rate, C_tau_s, plan_I_input, rand_id, now);
 
 			/* define mu */
 				mu=mutest(C_rate, C_T_mu, C_tol_mu, C_dt, C_tau_r__dt, C_ndt_mu, I_input);
@@ -148,6 +149,8 @@ int main()
 			mu_gen=0.;
 		}
 	delete[] I_input;
+	delete[] powspe_new;
+	delete[] powspe_old;
 	fftw_destroy_plan(plan_I_input);
 	fftw_forget_wisdom();
 

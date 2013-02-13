@@ -38,7 +38,7 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 double mutest(const double r_0, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff); // calculate mu for given rate r_0 (bisection)
 
-void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const double eps, const double r_0, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
+void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const double eps, const double r_0, const double tau_s, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
 /**************************************************************************/
 
 #endif //_cl_sim_hh_
