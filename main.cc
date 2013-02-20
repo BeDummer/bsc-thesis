@@ -25,7 +25,7 @@ void whitenoise_PS(double *arr, const int n, const double r_0) // generate bandl
 /***********************************************************************/
 void ornstein_PS(double *arr, const int N, const double df, const double tau, const double D) // generate powerspectrum of an ohrnstein-uhlenbeck-process
 {
-	double fak1=4.*tau*D, fak2=4.*M_PI*M_PI*df*df*tau*tau;
+	double fak1=4.*tau*D, fak2=4.*MSQR_PI*pow(df,2)*pow(tau,2);
 	for (unsigned int i = 0; i < N; i++)
 	{
 		arr[i]=fak1/(1+i*i*fak2);

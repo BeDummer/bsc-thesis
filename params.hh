@@ -5,7 +5,7 @@
 const double C_rate= .1; // firing rate [1/tau_m]=10^{2} [Hz]
 const double C_dt= .001; // timestep [tau_m]=10^{-2}[sec]
 const int C_ndt=1048576;//524288;//262144;//131072;//65536; // number of timesteps in simulation
-const int C_ndt_mu=524288;//32768;//16384; // number of timesteps in bisection
+const int C_ndt_mu=C_ndt/2;//32768;//16384; // number of timesteps in bisection
 const double C_eps=.3; // weight of Input-Current
 const double C_tau_r=.1; // absolute refractory period [tau_m]=10^{-2}[sec]
 const int C_N_neuron=1000 ; // number of neurons per generation
@@ -23,6 +23,7 @@ const double C_tol_mu=1./C_T_mu; // tolerance for bisection
 const int C_size_powspe=C_ndt/2+1; // size of vector for powerspectra
 
 const double M2_PI=2*M_PI; // 2x pi
+const double MSQR_PI=pow(M_PI,2); // pi^2
 
 /* some values to know:
 
