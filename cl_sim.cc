@@ -40,10 +40,14 @@ double ISI::std_dev(const double dt)
 	return sqrt(sigma);
 }
 /******************************************************/
+inline double window(int i, int size) // Welch window function
+{
+	double x=1-pow((2*i/size-1),2);
+	return x;
+}
 
 void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt) // calculate the powerspectrum of realisation "isi_train"
 {
-	#define w(i) (1-pow((2*i/N-1),2)) /* Welch-Windowfunction */
 	const unsigned int size_powspe=N/2+1, isi_size=isi_train.isi_.size();
 	double* train = new double[N];
 	const double rec_dt=1/dt;
@@ -65,13 +69,13 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 /* compute spiketrain from isi-times-train */
 	for (unsigned int i=0; i<N; i++) {
-		W+=pow(w(i),2);
+		W+=pow(window(i,N),2);
 		if (count<isi_size){
 			if (j<isi_train.isi(count)) {
 				train[i]=0;
 				j++;
 			} else {
-				train[i]=rec_dt*w(i);
+				train[i]=rec_dt*window(i,N);
 				count++;
 				j=0;
 			}
@@ -88,7 +92,7 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 /* fourier-transform the spiketrain */
 	fftw_execute(plan_fft);
 
-	fak/=W;
+//	fak/=W;
 	spect[0]=train[0]*train[0]*fak;
 	spect[size_powspe-1]=train[N/2]*train[N/2]*fak;
 
@@ -116,10 +120,7 @@ double mutest(const double r_0, const double T_test, const double tol_mu, const 
 	test.lif_neuron(mid,dt,tau_r__dt,N,I_diff);
 	double r=test.rate();
 	while (fabs(r_0-r)>tol_mu) {
-		if (r>r_0)
-      			max=mid;
-    		else
-      			min=mid;
+		(r>r_0 ? max : min) = mid;
 		mid=(max+min)/2;
 		test.lif_neuron(mid,dt,tau_r__dt,N,I_diff);
 		r=test.rate();
