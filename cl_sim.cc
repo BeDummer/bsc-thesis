@@ -39,19 +39,22 @@ double ISI::std_dev(const double dt)
 	}
 	return sqrt(sigma);
 }
-/******************************************************/
+
+/*****************************************************
+
 inline double window(int i, int size) // Welch window function
 {
 	double x=1-pow((2*i/size-1),2);
 	return x;
 }
 
+/*****************************************************/
+
 void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt) // calculate the powerspectrum of realisation "isi_train"
 {
 	const unsigned int size_powspe=N/2+1, isi_size=isi_train.isi_.size();
 	double* train = new double[N];
-	const double rec_dt=1/dt;
-	double fak=dt/(N-1), W=0; /* W..sum of window-weight */
+	const double fak=dt/(N-1), rec_dt=1/dt; 
 
 	unsigned int count=0, j=0;
 
@@ -69,13 +72,12 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 /* compute spiketrain from isi-times-train */
 	for (unsigned int i=0; i<N; i++) {
-		W+=pow(window(i,N),2);
 		if (count<isi_size){
 			if (j<isi_train.isi(count)) {
 				train[i]=0;
 				j++;
 			} else {
-				train[i]=rec_dt*window(i,N);
+				train[i]=rec_dt;
 				count++;
 				j=0;
 			}
@@ -92,7 +94,6 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 /* fourier-transform the spiketrain */
 	fftw_execute(plan_fft);
 
-//	fak/=W;
 	spect[0]=train[0]*train[0]*fak;
 	spect[size_powspe-1]=train[N/2]*train[N/2]*fak;
 

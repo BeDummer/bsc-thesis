@@ -66,7 +66,7 @@ void safe_powspe(const double* powspe, const double rate, const double sigma, co
 }
 /***********************************************************************/
 
-int main()
+int main(void)
 {
 /* variables for calculation */
 	double* powspe_old;
