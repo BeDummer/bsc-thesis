@@ -2,10 +2,10 @@
 
 clear all
 
-start=1;
-Gen=4;
+start=0;
+Gen=3;
 
-filename='data/2013-02-20_15-31__';
+filename='data/2013-03-01_20-51__';
 filename_tmp=[filename '0.dat'];
 temp=importdata(filename_tmp,'\t',1);
 

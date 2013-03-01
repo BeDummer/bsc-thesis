@@ -110,8 +110,6 @@ int main(int argc, char *argv[])
 		for (unsigned int i_gen = 1; i_gen <= C_N_Gen; i_gen++)
 		{
 /* T */			cout << "Gen: " << i_gen << endl;			
-//* T */			tstart=clock();
-//* T */			cout << "sigma^2 (integral S)= " << int_powspe(powspe_old, C_size_powspe, (1./(C_ndt*C_dt))) << endl;
 			for (unsigned int i_neuron = 0; i_neuron < C_N_neuron; i_neuron++)
 			{
 /* T */				cout << "Neuron: " << i_neuron << endl;			
@@ -123,6 +121,10 @@ int main(int argc, char *argv[])
 				if (arg_mu_cv)
 				{
 					mu_eps = mu_eps_test(C_rate, C_cv, C_eps_avg, C_tau_r__dt, C_T_mu, C_tol_mu, C_dt, C_ndt_mu, I_input);
+					if (mu_eps[1]==log(-1)) {
+						i_neuron--;
+						continue;
+					}
 					interval.lif_neuron(mu_eps[1], C_rate, C_eps_avg, mu_eps[2], C_dt, C_tau_r__dt, C_ndt, I_input);
 				}
 				else

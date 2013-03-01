@@ -35,7 +35,7 @@ double ISI::var(const double dt)
 	int size=isi_.size();
 	for (unsigned int i = 0; i < size; i++)
 	{
-		sigma+=(T-isi_[i]*dt)*(T-isi_[i]*dt)/size;
+		sigma+=pow((T-isi_[i]*dt),2)/size;
 	}
 	return sqrt(sigma);
 }
@@ -136,26 +136,60 @@ double mutest(const double r_0, const double eps_avg, const double eps_diff, con
 double* mu_eps_test(const double r_0, const double cv_0, const double eps_avg, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff) // calculate mu and eps_diff for given rate r_0 and cv_0(bisection-algorithm)
 {
 	ISI test(T_test, r_0);
-	const double tol_cv=tol_mu*cv_0/r_0;
-	double min[2]={-5.,0.} , max[2]={5.,1.} , mid[2]={(max[1]+min[1])/2.,(max[2]+min[2])/2.};
-//	double min_eps=0. , max_eps=1. , mid_eps=(max_eps+min_eps)/2.;
-	
+	const double tol=pow(10.,-6.);
+	double tol_cv=5*tol_mu;
+	int count=0;
+	double min[2], max[2], mid[2], *mu_eps;
+	min[1]=-2.;
+	min[2]=0.;
+	max[1]=2.;
+	max[2]=1.;
+	mid[1]=(max[1]+min[1])/2.;
+	mid[2]=(max[2]+min[2])/2.;
+
 	test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
 	double r=test.rate();
 	double cv=r*test.var(dt);
-	while (fabs(r_0-r)>tol_mu && fabs(cv_0-cv)>tol_cv) {
-		(r>r_0 ? max[1] : min[1]) = mid[1];
-		mid[1]=(max[1]+min[1])/2.;
+	while (fabs(cv_0-cv)>tol_cv || fabs(r_0-r)>tol_mu) {
+		count++;
+		if (fabs(max[2]-min[2])<tol)
+		{
+			min[2]/=10.;
+			max[2]*=10.;
+			mid[2]=(max[2]+min[2])/2.;
+			test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
+			r=test.rate();
+		}
+		while (fabs(r_0-r)>tol_mu) {
+			(r>r_0 ? max[1] : min[1]) = mid[1];
+			mid[1]=(max[1]+min[1])/2.;
+			test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
+			r=test.rate();
+		}
+		cv=r*test.var(dt);
 		(cv>cv_0 ? max[2] : min[2]) = mid[2];
 		mid[2]=(max[2]+min[2])/2.;
 		test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
-		r=test.rate();
+		r=test.rate();		
 		cv=r*test.var(dt);
-/* T */		cout << mid[1] << "\t" << r << "\t" << mid[2] << "\t" << cv << endl;
+		min[1]-=.5;
+		max[1]+=.5;
+
+		if (count>100) {
+			tol_cv*=2.;
+			if (count>1000) {
+/* T */				cout << "!!!No Convergence in mu_eps_test!!!" << endl;
+				mid[1]=log(-1);
+				mid[2]=log(-1);
+				mu_eps=mid;
+				break;				
+			}
+		}	
+//* T */		cout << mid[1] << "\t" << r << "\t" << mid[2] << "\t" << cv << endl;
 	}
-//* T */	cout << mid[1] << "\t" << r << "\t" << mid[2] << "\t" << cv << endl;
+/* T */	cout << mid[1] << "\t" << r << "\t" << mid[2] << "\t" << cv << endl;
 		
-	double *mu_eps=mid;
+	mu_eps=mid;
 	return mu_eps;
 }
 
