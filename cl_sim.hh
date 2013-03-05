@@ -27,12 +27,25 @@ class ISI {
 		ISI(double T_max, double r_0):
 			T_max_(T_max)
 			{isi_.reserve(static_cast<int>(T_max*r_0*1.5));};
-		int isi(int i) const {return isi_[i];};
-		void lif_neuron(const double mu, const double r_0, const double eps_avg, const double eps_diff, const double dt, const int tau_r__dt, const int N, const double* I_diff);
-		double rate();
-		double var(const double dt);
+		int isi(int i)const {return isi_[i];};
+		double rate()const {return (isi_.size()/T_max_);};
+		double CV(const double dt)const {return (rate()*var(dt));};
+		double var(const double dt)const;
+		void calc_rho_k(const unsigned int, const double, double*, const int, const ISI&);
+		void lif_neuron(const double, const double, const double, const double , const int, const int, const double*);
 	friend void powerspectrum(double* , const ISI&, const int, const double);
 };
+
+inline double ISI::var(const double dt)const
+{
+	double T_sqr=1./pow(ISI::rate(),2), tmp=0;
+	int size=isi_.size();
+	for (unsigned int i = 0; i < size; i++)
+	{
+		tmp+=pow((isi_[i]*dt),2)/size;
+	}
+	return (tmp-T_sqr);
+}
 
 void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt); // calculate the powerspectrum of realisation "isi_train"
 

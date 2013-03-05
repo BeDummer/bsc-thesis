@@ -4,7 +4,7 @@ clear all
 
 taum=0.01;
 
-filename='data/2013-02-13_20-15__1.dat';
+filename='data/2013-03-05_20-59__1.dat';
 temp=importdata(filename,'\t',1);
 
 tau=temp.data(1,5)*taum;
@@ -16,7 +16,7 @@ f=[df:df:fmax]; % [Hz]
 w=f*2.0*pi(); % [rad/s]
 
 
-temp=importdata(filename,'',7);
+temp=importdata(filename,'',21);
 S=temp.data();
 
 % plotting original data

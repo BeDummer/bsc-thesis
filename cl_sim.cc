@@ -4,14 +4,15 @@
 
 /*************************************************/
 
-void ISI::lif_neuron(const double mu, const double r_0, const double eps_avg, const double eps_diff, const double dt, const int tau_r__dt, const int N, const double* I_diff) // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) --> (tau_m=1) with fire-and-reset rule (v=1 --> spike at t --> v(t+tau_r)=0) and save the interspike-interval-times
+void ISI::lif_neuron(const double mu, const double r_0, const double eps, const double dt, const int tau_r__dt, const int N, const double* I_diff) // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) --> (tau_m=1) with fire-and-reset rule (v=1 --> spike at t --> v(t+tau_r)=0) and save the interspike-interval-times
 {
 	double v=0.;
+	const double eps_sqr=pow(eps,2);
 	int T=0;
 	isi_.clear();
 	for (unsigned int t=0; t<N; t++)
 		{
-			v+= (-v+mu+eps_avg*r_0+eps_diff*I_diff[t])*dt; // Euler-step
+			v+= (-v+mu+eps*r_0+eps_sqr*I_diff[t])*dt; // Euler-step
 			if (v>=1.) // fire-and-reset rule
 		    	{
 		      		isi_.push_back(T); // append 'T' to vector 'isi'
@@ -23,21 +24,22 @@ void ISI::lif_neuron(const double mu, const double r_0, const double eps_avg, co
 		}  
 }
 
-double ISI::rate()
+void ISI::calc_rho_k(const unsigned int k_max, const double dt, double* rho_k, const int neuron, const ISI& isi_train)
 {
-	double r=isi_.size()/T_max_;
-	return r;
-}
+	double tmp;
+	const unsigned int isi_size=isi_train.isi_.size();
+	const double T_sqr=1./pow(isi_train.rate(),2), variance=isi_train.var(dt);
 
-double ISI::var(const double dt)
-{
-	double T=1/(ISI::rate()), sigma=0;
-	int size=isi_.size();
-	for (unsigned int i = 0; i < size; i++)
+	for (unsigned int k = 0; k < k_max; k++)
 	{
-		sigma+=pow((T-isi_[i]*dt),2)/size;
+		tmp=0;
+		for (unsigned int i = 0; (i+k) < isi_size; i++)
+		{
+			tmp+=(isi_train.isi(i)*dt)*(isi_train.isi(i+k)*dt)/(isi_size-k);
+		}
+		rho_k[k+neuron*k_max]=(tmp-T_sqr)/variance;
 	}
-	return sqrt(sigma);
+	
 }
 
 /*****************************************************
@@ -113,17 +115,17 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 /**************************************************************/
 
-double mutest(const double r_0, const double eps_avg, const double eps_diff, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection-algorithm)
+double mutest(const double r_0, const double eps, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff) // calculate mu for given rate r_0 (bisection-algorithm)
 {
 	ISI test(T_test, r_0);
 	double min=-5. , max=5. , mid=(max+min)/2.;
 	
-	test.lif_neuron(mid,r_0,eps_avg,eps_diff,dt,tau_r__dt,N,I_diff);
+	test.lif_neuron(mid,r_0,eps,dt,tau_r__dt,N,I_diff);
 	double r=test.rate();
 	while (fabs(r_0-r)>tol_mu) {
 		(r>r_0 ? max : min) = mid;
 		mid=(max+min)/2;
-		test.lif_neuron(mid,r_0,eps_avg,eps_diff,dt,tau_r__dt,N,I_diff);
+		test.lif_neuron(mid,r_0,eps,dt,tau_r__dt,N,I_diff);
 		r=test.rate();
 //* T */		cout << mid << "\t" << r << endl;
 	}
@@ -133,7 +135,7 @@ double mutest(const double r_0, const double eps_avg, const double eps_diff, con
 
 /**************************************************************/
 
-double* mu_eps_test(const double r_0, const double cv_0, const double eps_avg, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff) // calculate mu and eps_diff for given rate r_0 and cv_0(bisection-algorithm)
+double* mu_eps_test(const double r_0, const double cv_0, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff) // calculate mu and eps_diff for given rate r_0 and cv_0(bisection-algorithm)
 {
 	ISI test(T_test, r_0);
 	const double tol=pow(10.,-6.);
@@ -147,9 +149,9 @@ double* mu_eps_test(const double r_0, const double cv_0, const double eps_avg, c
 	mid[1]=(max[1]+min[1])/2.;
 	mid[2]=(max[2]+min[2])/2.;
 
-	test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
+	test.lif_neuron(mid[1],r_0,mid[2],dt,tau_r__dt,N,I_diff);
 	double r=test.rate();
-	double cv=r*test.var(dt);
+	double cv=r*sqrt(test.var(dt));
 	while (fabs(cv_0-cv)>tol_cv || fabs(r_0-r)>tol_mu) {
 		count++;
 		if (fabs(max[2]-min[2])<tol)
@@ -157,21 +159,21 @@ double* mu_eps_test(const double r_0, const double cv_0, const double eps_avg, c
 			min[2]/=10.;
 			max[2]*=10.;
 			mid[2]=(max[2]+min[2])/2.;
-			test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
+			test.lif_neuron(mid[1],r_0,mid[2],dt,tau_r__dt,N,I_diff);
 			r=test.rate();
 		}
 		while (fabs(r_0-r)>tol_mu) {
 			(r>r_0 ? max[1] : min[1]) = mid[1];
 			mid[1]=(max[1]+min[1])/2.;
-			test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
+			test.lif_neuron(mid[1],r_0,mid[2],dt,tau_r__dt,N,I_diff);
 			r=test.rate();
 		}
-		cv=r*test.var(dt);
+		cv=r*sqrt(test.var(dt));
 		(cv>cv_0 ? max[2] : min[2]) = mid[2];
 		mid[2]=(max[2]+min[2])/2.;
-		test.lif_neuron(mid[1],r_0,eps_avg,mid[2],dt,tau_r__dt,N,I_diff);
+		test.lif_neuron(mid[1],r_0,mid[2],dt,tau_r__dt,N,I_diff);
 		r=test.rate();		
-		cv=r*test.var(dt);
+		cv=r*sqrt(test.var(dt));
 		min[1]-=.5;
 		max[1]+=.5;
 
