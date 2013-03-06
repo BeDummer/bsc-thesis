@@ -3,9 +3,9 @@
 clear all
 
 start=0;
-Gen=6;
+Gen=11;
 
-filename='data/2013-03-05_20-32__';
+filename='data/2013-03-05_21-06__';
 filename_tmp=[filename '0.dat'];
 temp=importdata(filename_tmp,'\t',1);
 
@@ -48,7 +48,7 @@ for i=start:(Gen-1)
 	end
 	% plotting averaged data
 	figure(1)
-	plot(f2(1:500),S2(1:500),lines{i+1})
+	plot(f2(1:200),S2(1:200),lines{i+1})
 	if i==start
 		hold on
 	end
@@ -61,7 +61,7 @@ for i=start:(Gen-1)
 
 	if i~=start
 		y0=mean(S(1:100));
-		rho_kum(i)=y0/CV^2-1;
+		rho_kum(i)=(y0/CV^2-1)/2;
 	end
 end
 figure(1)

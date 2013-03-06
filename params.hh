@@ -9,8 +9,8 @@ const unsigned int C_ndt=1048576;//524288;//262144;//131072;//65536; // number o
 const unsigned int C_ndt_mu=C_ndt/2;//32768;//16384; // number of timesteps in bisection
 const double C_eps=.3; // weight of Input-Current
 const double C_tau_r=.1; // absolute refractory period [tau_m]=10^{-2}[sec]
-const unsigned int C_N_neuron=5 ; // number of neurons per generation
-const unsigned int C_N_Gen=1 ; // number of layers in the feedforward-network (generations)
+const unsigned int C_N_neuron=10000 ; // number of neurons per generation
+const unsigned int C_N_Gen=10 ; // number of layers in the feedforward-network (generations)
 
 const double C_tau_s=.3 ; // time constant for synaptic filtering - 2-4 msec (cut-off frequency for powerspectrum at 1/tau_s) [tau_m]=10^{-2}[sec]
 

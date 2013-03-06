@@ -29,8 +29,8 @@ double variance(const double *arr, const int n, const double avg) // calculate v
 {
 	double tmp=0;
 	for (unsigned int i=0;i<n;i++)
-		tmp +=pow((avg-arr[i]),2)/n;
-	return tmp;
+		tmp +=pow(arr[i],2)/n;
+	return (tmp-avg);
 }
 /***********************************************************************/
 void whitenoise_PS(double *arr, const int n, const double r_0) // generate bandlimited white-noise powerspectrum with rate r_0 und cut-off frequency f_c=1/(2*C_dt)
@@ -69,7 +69,7 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\t" << "k_max\t" << "r_0\t" << "CV_0\n"
 		<< C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\t" << C_rho_k_max << "\t" << C_rate << "\t" << C_cv
 		<< "\n\n mu\t\trate\t\tsigma\t\tCV\n"
-		<< mu << "\t" << rate << "\t" << sigma << "\t" << (sigma*rate) << "\n" << mu_var << "\t" << rate_var << "\t" << sigma_var << "\t" << sqrt(pow(sigma_var,2)+pow(rate_var,2)) << "\n\n rho_avg \t rho_var\n";
+		<< mu << "\t" << rate << "\t" << sigma << "\t" << (sqrt(sigma)*rate) << "\n" << mu_var << "\t" << rate_var << "\t" << sigma_var << "\t" << sqrt(pow((rate*sigma_var),2)/sigma+sigma*pow(rate_var,2)) << "\n\n rho_avg \t rho_var\n";
 
 	for (i = 0; i < C_rho_k_max; i++)
 	{
