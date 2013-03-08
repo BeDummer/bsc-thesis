@@ -15,7 +15,11 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-using namespace std;
+	using namespace std;
+/*#include <boost/thread.hpp>
+	using namespace boost;
+	using namespace boost::this_thread;*/
+
 
 /*******************************************************************/
 
@@ -27,18 +31,19 @@ class ISI {
 		ISI(double T_max, double r_0):
 			T_max_(T_max)
 			{isi_.reserve(static_cast<int>(T_max*r_0*1.5));};
+		~ISI() {isi_.clear();};
 		int isi(int i)const {return isi_[i];};
 		double rate()const {return (isi_.size()/T_max_);};
 		double CV(const double dt)const {return (rate()*sqrt(var(dt)));};
 		double var(const double dt)const;
-		void calc_rho_k(const unsigned int, const double, double*, const int, const ISI&);
-		void lif_neuron(const double, const double, const double, const double , const int, const int, const double*);
+		void calc_rho_k(const unsigned int, const double, double*, const unsigned int, const ISI&);
+		void lif_neuron(const double, const double, const double, const int, const double , const int, const int, const double*);
 	friend void powerspectrum(double* , const ISI&, const int, const double);
 };
 
 inline double ISI::var(const double dt)const
 {
-	double T_sqr=1./pow(ISI::rate(),2), tmp=0;
+	double T_sqr=1./pow(ISI::rate(),2), tmp=0.;
 	int size=isi_.size();
 	for (unsigned int i = 0; i < size; i++)
 	{
@@ -49,11 +54,11 @@ inline double ISI::var(const double dt)const
 
 void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt); // calculate the powerspectrum of realisation "isi_train"
 
-double mutest(const double r_0, const double eps_avg, const double eps_diff, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff); // calculate mu for given rate r_0 (bisection)
+double mutest(const double r_0, const double eps_avg, const int N_neuron, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff); // calculate mu for given rate r_0 (bisection)
 
-double* mu_eps_test(const double r_0, const double cv_0, const double eps_avg, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff); // calculate mu and eps_diff for given rate r_0 and cv_0(bisection-algorithm)
+double* mu_eps_test(const double r_0, const double cv_0, const int N_neuron, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff); // calculate mu and eps_diff for given rate r_0 and cv_0(bisection-algorithm)
 
-void calc_I_diff(double* I_diff, double const* S, const int N, const double dt, const double r_0, const double tau_s, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
+void calc_I_diff(double* I_diff, double const* S, , const double eps, const int N_neuron, const int N_step, const double dt, const double r_0, const double tau_s, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
 /**************************************************************************/
 
 #endif //_cl_sim_hh_

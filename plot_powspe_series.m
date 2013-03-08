@@ -3,9 +3,9 @@
 clear all
 
 start=0;
-Gen=11;
+Gen=6;
 
-filename='data/2013-03-05_21-06__';
+filename='data/2013-03-08_16-09_0.3_0.4__';
 filename_tmp=[filename '0.dat'];
 temp=importdata(filename_tmp,'\t',1);
 
@@ -22,6 +22,7 @@ f2=[(binsize/2*df):(binsize*df):(fmax-binsize/2*df)];
 S2=zeros(1,length(f2));
 std_dev_S2=zeros(1,length(f2));
 rho_kum=zeros(1,Gen-1);
+u_rho_kum=zeros(1,Gen-1);
 
 for i=start:(Gen-1)
 	filename_tmp=[filename int2str(i) '.dat'];
@@ -29,9 +30,10 @@ for i=start:(Gen-1)
 	temp=importdata(filename_tmp,'\t',4);
 	r0=temp.data(1,2);
 	
-	if i~=start
-		CV=temp.data(1,4);
-	end
+%	if i~=0
+%		CV=temp.data(1,4);
+%		u_CV=temp.data(2,4);
+%	end
 
 	temp=importdata(filename_tmp,'\t',9);
 	rho=temp.data(1:k_max,1);
@@ -48,7 +50,7 @@ for i=start:(Gen-1)
 	end
 	% plotting averaged data
 	figure(1)
-	plot(f2(1:200),S2(1:200),lines{i+1})
+	loglog(f2(1:500),S2(1:500),lines{i+1})
 	if i==start
 		hold on
 	end
@@ -59,14 +61,18 @@ for i=start:(Gen-1)
 		hold on
 	end
 
-	if i~=start
-		y0=mean(S(1:100));
-		rho_kum(i)=(y0/CV^2-1)/2;
-	end
+%	if i~=0
+%		y0=mean(S(1:100));
+%		u_y0=std(S(1:100));
+%		rho_kum(i)=(y0/CV^2-1)/2;
+%		u_rho_kum(i)=sqrt((u_y0/2/CV^2)^2+(u_CV*y0/CV^3)^2);
+%	end
 end
+
 figure(1)
 hold off
 figure(2)
 hold off
 
-rho_kum
+%rho_kum
+%u_rho_kum
