@@ -2,7 +2,7 @@
 
 #include "cl_sim.cc"
 
-double C_rate, C_eps;
+//double C_rate, C_eps;
 /***********************************************************************/
 void dzeros(double *arr, const int n) // write zeros in double-array
 {
@@ -31,8 +31,8 @@ double variance(const double *arr, const int n, const double avg) // calculate v
 {
 	double tmp=0;
 	for (unsigned int i=0;i<n;i++)
-		tmp +=pow(arr[i],2)/n;
-	return (tmp-pow(avg,2));
+		tmp +=pow(avg-arr[i],2)/(n-1);
+	return tmp;
 }
 /***********************************************************************/
 void whitenoise_PS(double *arr, const int n, const double r_0) // generate bandlimited white-noise powerspectrum with rate r_0 und cut-off frequency f_c=1/(2*C_dt)
@@ -60,7 +60,7 @@ double int_powspe(const double* powspe, const int size, const double df) // calc
 	return (2*integral*df);
 }
 /***********************************************************************/
-void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double mu, const double rate_var, const double sigma_var, const double CV_var, const double mu_var, const int gen, const char* date) // saving powerspectrum to file
+void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double mu, const double rate_var, const double sigma_var, const double CV_var, const double mu_var, const int gen, const char* date) // saving powerspectrum to file for arg_mu_cv=0
 {
 	stringstream buffer, filename;
 	string filename_tmp;
@@ -78,7 +78,7 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 		buffer << rho_avg[i] << "\t" << rho_var[i] << endl;
 	}
 
-	buffer << "\n";
+	buffer << endl;
 
 	for (i = 0; i < C_size_powspe; i++)
 	{
@@ -93,65 +93,55 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 		file << buffer.str();
 	file.close();
 }
-/***********************************************************************
-boost::shared_mutex m_mutex1;
-boost::shared_mutex m_mutex2;
-
-void calc_neuron(const double* powspe_old, double* powspe_new, double* rate_gen, double* sigma_gen, double* CV_gen, double* mu_gen, double* rho_k_gen, const unsigned int i_neuron, const long int rand_id, const time_t now, const char* fft_wisdom_I_input)
+/***********************************************************************/
+void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double mu, const double eps, const double rate_var, const double sigma_var, const double CV_var, const double mu_var, const double eps_var, const int gen, const char* date) // saving powerspectrum to file for arg_mu_cv=1
 {
-		ISI interval(C_T_max, C_rate);
-		double* I_input=new double[C_ndt];
-		
-	// generate Diffusion-Current
-		boost::shared_lock<boost::shared_mutex> lock(m_mutex1);
-		fftw_import_wisdom_from_string(fft_wisdom_I_input);
-		fftw_plan plan_I_input = fftw_plan_r2r_1d(C_ndt, I_input, I_input, FFTW_HC2R, FFTW_WISDOM_ONLY | FFTW_DESTROY_INPUT);
-		calc_I_diff(I_input, powspe_old, C_ndt, C_dt, C_rate, C_tau_s, plan_I_input, rand_id, now);
-		lock.unlock();
-		fftw_destroy_plan(plan_I_input);
+	stringstream buffer, filename;
+	string filename_tmp;
+	ofstream file;
+	unsigned int i;
 
-	// define mu + create ISI-train
-		double mu = mutest(C_rate, C_eps, C_tau_r__dt, C_T_mu, C_tol_mu, C_dt, C_ndt_mu, I_input);
-		interval.lif_neuron(mu, C_rate, C_eps, C_dt, C_tau_r__dt, C_ndt, I_input);
+/* write Powerspectrum, mu, rate and constants into buffer */
+	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\t" << "k_max\t" << "r_0\t" << "CV_0\n"
+		<< C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\t" << C_rho_k_max << "\t" << C_rate << "\t" << C_cv
+		<< "\n\n mu\t\trate\t\tsigma\t\tCV\n"
+		<< mu << "\t" << rate << "\t" << sigma << "\t" << CV << "\t" << eps << "\n" << mu_var << "\t" << rate_var << "\t" << sigma_var << "\t" << CV_var << "\t" << eps_var << "\n\n rho_avg \t rho_var\n";
 
-		delete[] I_input;
+	for (i = 0; i < C_rho_k_max; i++)
+	{
+		buffer << rho_avg[i] << "\t" << rho_var[i] << endl;
+	}
 
-	// calculate Powerspectrum 
-		double* S_temp= new double[C_size_powspe];
-		powerspectrum(S_temp, interval, C_ndt, C_dt);
+	buffer << endl;
 
-		boost::unique_lock<boost::shared_mutex> lock2(m_mutex2); 
-		for (unsigned int i_S = 0; i_S < C_size_powspe; i_S++)
-		{
-			powspe_new[i_S]+=S_temp[i_S]/C_N_neuron;
-		}			
-		delete[] S_temp;
+	for (i = 0; i < C_size_powspe; i++)
+	{
+		buffer << (powspe[i]) << endl;
+	}
 
-	// calculate averages of rate and mu
-		rate_gen[i_neuron]=interval.rate();
-		sigma_gen[i_neuron]=interval.var(C_dt);
-		CV_gen[i_neuron]=interval.CV(C_dt);
-		mu_gen[i_neuron]= mu;
-		interval.calc_rho_k(C_rho_k_max,C_dt, rho_k_gen, i_neuron, interval);
-		lock2.unlock();
+	filename << "data/" << date << "_" << C_rate << "_" << C_cv << "__" << gen << ".dat";
+	filename_tmp=filename.str();
+
+/* saving data to file from buffer */
+	file.open(filename_tmp.c_str());
+		file << buffer.str();
+	file.close();
 }
 /***********************************************************************/
 
 int main(int argc, char *argv[])
 {
 	bool arg_mu_cv = 0;//(argc>1 ? 1 : 0);
-	if (argc==3)
+/*	if (argc==3)
 	{
 		C_rate=atof(argv[1]);
 		C_eps=atof(argv[2]);
 	}
-
+*/
 // variables and constants for calculation
 	double *powspe_old, *powspe_new, *S_temp, *I_input;
 	double *mu_gen, *rate_gen, *sigma_gen, *CV_gen, *eps_gen, *rho_k_gen, *mu_eps, mu;
 	double mu_avg, rate_avg, sigma_avg, CV_avg, eps_avg, rho_avg[C_rho_k_max]={0.0}, rho_var[C_rho_k_max]={0.0};
-
-
 
 // variables for initialization of random number generators	
 	unsigned long int rand_id=1;
@@ -164,7 +154,6 @@ int main(int argc, char *argv[])
 	strftime(date,18, "%Y-%m-%d_%H-%M",localtime(&now));
 	stringstream filename;
 	string filename_tmp;
-
 
 	// create plan for fft in "calc_I_diff"
 		I_input=new double[C_ndt];
@@ -189,7 +178,8 @@ int main(int argc, char *argv[])
 			rate_gen=new double[C_N_neuron];
 			sigma_gen=new double[C_N_neuron];
 			CV_gen=new double[C_N_neuron];
-// mu_eps_test			eps_gen=new double[C_N_neuron];
+			if (arg_mu_cv)
+				eps_gen=new double[C_N_neuron];
 
 			for (unsigned int i_neuron = 0; i_neuron < C_N_neuron; i_neuron++)
 			{
@@ -239,7 +229,8 @@ int main(int argc, char *argv[])
 				CV_gen[i_neuron]=interval.CV(C_dt);
 				mu_gen[i_neuron]= (arg_mu_cv ? mu_eps[1] : mu);
 				interval.calc_rho_k(C_rho_k_max,C_dt, rho_k_gen, i_neuron, interval);
-// mu_eps_test				eps_gen [i_neuron]= (arg_mu_cv ? mu_eps[2] : C_eps);
+				if (arg_mu_cv)
+					eps_gen [i_neuron]= (arg_mu_cv ? mu_eps[2] : C_eps);
 
 			}
 
@@ -261,9 +252,10 @@ int main(int argc, char *argv[])
 			sigma_avg=average(sigma_gen,C_N_neuron);
 			CV_avg=average(CV_gen,C_N_neuron);
 			mu_avg=average(mu_gen,C_N_neuron);
-// mu_eps_test			eps_avg=average(eps_gen,C_N_neuron);
+			if (arg_mu_cv)
+				eps_avg=average(eps_gen,C_N_neuron);
 
-			safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, mu_avg, /*eps_avg,*/variance(rate_gen,C_N_neuron,rate_avg), variance(sigma_gen,C_N_neuron,sigma_avg), variance(CV_gen,C_N_neuron,CV_avg), variance(mu_gen,C_N_neuron,mu_avg), /*variance(eps_gen,C_N_neuron,eps_avg),*/ i_gen, date);
+			(arg_mu_cv ? safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, mu_avg, eps_avg, variance(rate_gen,C_N_neuron,rate_avg), variance(sigma_gen,C_N_neuron,sigma_avg), variance(CV_gen,C_N_neuron,CV_avg), variance(mu_gen,C_N_neuron,mu_avg), variance(eps_gen,C_N_neuron,eps_avg), i_gen, date) : safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, mu_avg, variance(rate_gen,C_N_neuron,rate_avg), variance(sigma_gen,C_N_neuron,sigma_avg), variance(CV_gen,C_N_neuron,CV_avg), variance(mu_gen,C_N_neuron,mu_avg), i_gen, date));
 		
 		// resetting variables 
 			delete[] rho_k_gen;
@@ -271,7 +263,8 @@ int main(int argc, char *argv[])
 			delete[] sigma_gen;
 			delete[] CV_gen;
 			delete[] mu_gen;
-// mu_eps_test			delete[] eps_gen;
+			if (arg_mu_cv)
+				delete[] eps_gen;
 			cpNcl_d_arr(powspe_new, powspe_old, C_size_powspe);
 		}
 

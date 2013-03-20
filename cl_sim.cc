@@ -12,7 +12,7 @@ void ISI::lif_neuron(const double mu, const double r_0, const double eps, const 
 	isi_.clear();
 	for (unsigned int t=0; t<N_step; t++)
 		{
-			v+= (-v+sum+fak*I_diff[t]))*dt; // Euler-step
+			v+= (-v+sum+fak*I_diff[t])*dt; // Euler-step
 			if (v>=1.) // fire-and-reset rule
 		    	{
 		      		isi_.push_back(T); // append 'T' to vector 'isi'
@@ -24,21 +24,21 @@ void ISI::lif_neuron(const double mu, const double r_0, const double eps, const 
 		}  
 }
 
-void ISI::calc_rho_k(const unsigned int k_max, const double dt, double* rho_k, const unsigned int neuron, const ISI& isi_train)
+void ISI::calc_rho_k(const unsigned int k_max, const double dt, double* rho_k, const unsigned int neuron, const ISI& isi_train) // calculate the serial correlation coefficient rho_k until lag k_max-1
 {
-	double tmp, X1, X2, C, C1, C2;
+	double tmp1, tmp2, X1, X2, C, C1, C2;
 	const unsigned int N=isi_train.isi_.size();
 
 for (unsigned int k = 0; k < k_max; k++)
 {
-	tmp=N-k; X1=0; X2=0; C=0; C1=0; C2=0;
-	for (unsigned int i = 0; i < tmp; i += 1)
+	tmp1=N-k; tmp2=tmp1-5; X1=0; X2=0; C=0; C1=0; C2=0;
+	for (unsigned int i = 5; i < tmp1; i += 1) // forget the first 5 ISIs
 	{
-		X1+=isi_train.isi(i)*dt/tmp;
-		X2+=isi_train.isi(i+k)*dt/tmp;
-		C+=isi_train.isi(i)*dt*isi_train.isi(i+k)*dt/tmp;
-		C1+=pow((isi_train.isi(i)*dt),2)/tmp;
-		C2+=pow((isi_train.isi(i+k)*dt),2)/tmp;
+		X1+=isi_train.isi(i)*dt/tmp2;
+		X2+=isi_train.isi(i+k)*dt/tmp2;
+		C+=isi_train.isi(i)*dt*isi_train.isi(i+k)*dt/tmp2;
+		C1+=pow((isi_train.isi(i)*dt),2)/tmp2;
+		C2+=pow((isi_train.isi(i+k)*dt),2)/tmp2;
 	}
 	C-=X1*X2;
 	C1-=pow(X1,2);
@@ -131,12 +131,12 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 
 /**************************************************************/
 
-double mutest(const double r_0, const double eps, const int N_neuron const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N_step, const double* I_diff) // calculate mu for given rate r_0 (bisection-algorithm)
+double mutest(const double r_0, const double eps, const int N_neuron, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N_step, const double* I_diff) // calculate mu for given rate r_0 (bisection-algorithm)
 {
 	ISI test(T_test, r_0);
-	double min=-2. , max=2. , mid=(max+min)/2.;
+	double min=-10. , max=5. , mid=(max+min)/2.;
 	
-	test.lif_neuron(mid,r_0,eps,dt,tau_r__dt,N,I_diff);
+	test.lif_neuron(mid,r_0,eps,N_neuron,dt,tau_r__dt,N_step,I_diff);
 	double r=test.rate();
 	while (fabs(r_0-r)>tol_mu) {
 		(r>r_0 ? max : min) = mid;
@@ -219,6 +219,7 @@ void calc_I_diff(double* I_diff, double const* S, const double eps, const int N_
 	const double df=1/(dt*N_step), fak2= dt*(N_step-1)*pow(eps,2)/N_neuron, fak1=4*MSQR_PI*pow(df,2)*pow(tau_s,2); 
 	double a_n, phi_n;
 	unsigned long int init= id+static_cast<unsigned long>(now);
+	unsigned int i;
 	srand48(init);
   	gsl_rng *rng=gsl_rng_alloc(gsl_rng_taus2);
 	gsl_rng_set (rng,init);
@@ -226,7 +227,7 @@ void calc_I_diff(double* I_diff, double const* S, const double eps, const int N_
 /* generate current in fourier-domain with the statistics of the input-powerspectrum */
 	I_diff[0]=0;
 	I_diff[size]=gsl_ran_gaussian_ziggurat(rng,sqrt(fak2*S[size]/(1+fak1*pow(size,2))));
-	for (unsigned int i=1;i<size;i++){
+	for (i=1;i<size;i++){
 		a_n=gsl_ran_gaussian_ziggurat(rng,sqrt(fak2*S[i]/(1+fak1*pow(i,2))));
 		phi_n=M2_PI*drand48();
 		I_diff[i]=a_n*cos(phi_n);
@@ -239,14 +240,29 @@ void calc_I_diff(double* I_diff, double const* S, const double eps, const int N_
 	
 //* T */	double mean=0;
 //* T */	double std_dev=0;
+//* T */	stringstream buffer, filename;
+//* T */	string filename_tmp;
+//* T */	ofstream file;
+//* T */	char date[18];
+//* T */	strftime(date,18, "%Y-%m-%d_%H-%M",localtime(&now));
 
 /* multiply with df */
-	for (unsigned int i = 0; i < N_step; i++)
+	for (i = 0; i < N_step; i++)
 	{
 		I_diff[i]=df*I_diff[i];
 //* T */		mean+=I_diff[i];
 //* T */		std_dev+=I_diff[i]*I_diff[i];
+//* T */		buffer << I_diff[i] << endl;
 	}
 //* T */	cout << "Mean I= " << (mean/N_step) << "\t Std.dev. I= " << (std_dev/N_step) << endl;
+
+	
+//* T */	filename << "data/" << date << "_Idiff_" << C_rate << "_" << C_eps << "__" << id << ".dat";
+//* T */	filename_tmp=filename.str();
+
+/* saving data to file from buffer */
+//* T */	file.open(filename_tmp.c_str());
+//* T */		file << buffer.str();
+//* T */	file.close();
 }
 

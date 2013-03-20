@@ -43,13 +43,13 @@ class ISI {
 
 inline double ISI::var(const double dt)const
 {
-	double T_sqr=1./pow(ISI::rate(),2), tmp=0.;
+	double T=1./ISI::rate(), tmp=0.;
 	int size=isi_.size();
 	for (unsigned int i = 0; i < size; i++)
 	{
-		tmp+=pow((isi_[i]*dt),2)/size;
+		tmp+=pow((T-isi_[i]*dt),2)/(size-1);
 	}
-	return (tmp-T_sqr);
+	return tmp;
 }
 
 void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt); // calculate the powerspectrum of realisation "isi_train"
@@ -58,7 +58,7 @@ double mutest(const double r_0, const double eps_avg, const int N_neuron, const 
 
 double* mu_eps_test(const double r_0, const double cv_0, const int N_neuron, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff); // calculate mu and eps_diff for given rate r_0 and cv_0(bisection-algorithm)
 
-void calc_I_diff(double* I_diff, double const* S, , const double eps, const int N_neuron, const int N_step, const double dt, const double r_0, const double tau_s, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
+void calc_I_diff(double* I_diff, double const* S, const double eps, const int N_neuron, const int N_step, const double dt, const double r_0, const double tau_s, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
 /**************************************************************************/
 
 #endif //_cl_sim_hh_

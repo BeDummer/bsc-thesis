@@ -1,11 +1,13 @@
 % file "plot_powspe_series.m"
 
 clear all
+close all
 
 start=0;
 Gen=6;
+maxi=1000;
 
-filename='data/2013-03-08_16-09_0.3_0.4__';
+filename='data/2013-03-20_14-34_0.1_500__';
 filename_tmp=[filename '0.dat'];
 temp=importdata(filename_tmp,'\t',1);
 
@@ -30,10 +32,10 @@ for i=start:(Gen-1)
 	temp=importdata(filename_tmp,'\t',4);
 	r0=temp.data(1,2);
 	
-%	if i~=0
-%		CV=temp.data(1,4);
-%		u_CV=temp.data(2,4);
-%	end
+	if i~=0
+		CV=temp.data(1,4);
+		u_CV=temp.data(2,4);
+	end
 
 	temp=importdata(filename_tmp,'\t',9);
 	rho=temp.data(1:k_max,1);
@@ -50,7 +52,7 @@ for i=start:(Gen-1)
 	end
 	% plotting averaged data
 	figure(1)
-	loglog(f2(1:500),S2(1:500),lines{i+1})
+	semilogx(f2(1:maxi),S2(1:maxi),lines{i+1})
 	if i==start
 		hold on
 	end
@@ -61,12 +63,12 @@ for i=start:(Gen-1)
 		hold on
 	end
 
-%	if i~=0
-%		y0=mean(S(1:100));
-%		u_y0=std(S(1:100));
-%		rho_kum(i)=(y0/CV^2-1)/2;
-%		u_rho_kum(i)=sqrt((u_y0/2/CV^2)^2+(u_CV*y0/CV^3)^2);
-%	end
+	if i~=0
+		y0=mean(S(1:100));
+		u_y0=std(S(1:100));
+		rho_kum(i)=(y0/CV^2-1)/2;
+		u_rho_kum(i)=sqrt((u_y0/2/CV^2)^2+(u_CV*y0/CV^3)^2);
+	end
 end
 
 figure(1)
@@ -74,5 +76,5 @@ hold off
 figure(2)
 hold off
 
-%rho_kum
-%u_rho_kum
+rho_kum
+u_rho_kum
