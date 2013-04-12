@@ -6,7 +6,9 @@ close all
 taum=0.01;
 maxi=1000;
 
-filename='data/2013-03-20_14-34_0.1_500__2.dat';
+filename='data/2013-03-22_14-48_id-0_r-0.01_mu-1__5.dat';
+%filename='data/2013-03-22_14-48_id-1_r-0.01_e-1__5.dat';
+%filename='data/2013-03-22_14-48_id-2_r-0.01_cv-1__5.dat';
 temp=importdata(filename,'\t',1);
 
 tau=temp.data(1,5)*taum;
@@ -26,10 +28,10 @@ figure(1)
 loglog(f,S,'b-')
 absC=abs(C);
 figure(2)
-plot(t(1:maxi),absC(1:maxi),'k-')
+semilogx(t(1:maxi),absC(1:maxi),'k-')
 hold on
-plot(t(1:maxi),real(C(1:maxi)),'b-')
-plot(t(1:maxi),imag(C(1:maxi)),'r-')
+semilogx(t(1:maxi),real(C(1:maxi)),'b-')
+semilogx(t(1:maxi),imag(C(1:maxi)),'r-')
 hold off
 
 % computing averaged data for given binsize

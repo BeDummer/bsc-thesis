@@ -2,7 +2,9 @@
 
 #include "cl_sim.cc"
 
-//double C_rate, C_eps;
+double C_mu,C_cv,C_r_0; // leak-current, coefficient of variation, start-rate for kind=0
+
+
 /***********************************************************************/
 void dzeros(double *arr, const int n) // write zeros in double-array
 {
@@ -60,7 +62,7 @@ double int_powspe(const double* powspe, const int size, const double df) // calc
 	return (2*integral*df);
 }
 /***********************************************************************/
-void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double mu, const double rate_var, const double sigma_var, const double CV_var, const double mu_var, const int gen, const char* date) // saving powerspectrum to file for arg_mu_cv=0
+void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double rate_var, const double sigma_var, const double CV_var, const int gen, const char* date) // saving powerspectrum to file for fix_none=1
 {
 	stringstream buffer, filename;
 	string filename_tmp;
@@ -68,8 +70,42 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 	unsigned int i;
 
 /* write Powerspectrum, mu, rate and constants into buffer */
-	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\t" << "k_max\t" << "r_0\t" << "CV_0\n"
-		<< C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\t" << C_rho_k_max << "\t" << C_rate << "\t" << C_cv
+	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\t" << "N_trials\t" << "k_max\t" << "r_0\t" << "mu\n"
+		<< C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\t" << C_N_trials << "\t" << C_rho_k_max << "\t" << C_rate << "\t" << C_mu
+		<< "\n\n rate\t\tsigma\t\tCV\n"
+		<< rate << "\t" << sigma << "\t" << CV << "\n" << rate_var << "\t" << sigma_var << "\t" << CV_var << "\n\n rho_avg \t rho_var\n";
+
+	for (i = 0; i < C_rho_k_max; i++)
+	{
+		buffer << rho_avg[i] << "\t" << rho_var[i] << endl;
+	}
+
+	buffer << endl;
+
+	for (i = 0; i < C_size_powspe; i++)
+	{
+		buffer << (powspe[i]) << endl;
+	}
+
+	filename << "data/" << date << "_id-0_r-" << C_r_0 << "_mu-" << C_mu << "__" << gen << ".dat";
+	filename_tmp=filename.str();
+
+/* saving data to file from buffer */
+	file.open(filename_tmp.c_str());
+		file << buffer.str();
+	file.close();
+}
+/***********************************************************************/
+void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double mu, const double rate_var, const double sigma_var, const double CV_var, const double mu_var, const int gen, const char* date) // saving powerspectrum to file for fix_r_cv=0 & fix_none=0
+{
+	stringstream buffer, filename;
+	string filename_tmp;
+	ofstream file;
+	unsigned int i;
+
+/* write Powerspectrum, mu, rate and constants into buffer */
+	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\t" << "N_trials\t" << "k_max\t" << "r_0\n"
+		<< C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\t" << C_N_trials << "\t" << C_rho_k_max << "\t" << C_rate
 		<< "\n\n mu\t\trate\t\tsigma\t\tCV\n"
 		<< mu << "\t" << rate << "\t" << sigma << "\t" << CV << "\n" << mu_var << "\t" << rate_var << "\t" << sigma_var << "\t" << CV_var << "\n\n rho_avg \t rho_var\n";
 
@@ -85,7 +121,7 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 		buffer << (powspe[i]) << endl;
 	}
 
-	filename << "data/" << date << "_" << C_rate << "_" << C_eps << "__" << gen << ".dat";
+	filename << "data/" << date << "_id-1_r-" << C_rate << "_e-" << C_eps << "__" << gen << ".dat";
 	filename_tmp=filename.str();
 
 /* saving data to file from buffer */
@@ -94,7 +130,7 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 	file.close();
 }
 /***********************************************************************/
-void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double mu, const double eps, const double rate_var, const double sigma_var, const double CV_var, const double mu_var, const double eps_var, const int gen, const char* date) // saving powerspectrum to file for arg_mu_cv=1
+void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_var, const double rate, const double sigma, const double CV, const double mu, const double eps, const double rate_var, const double sigma_var, const double CV_var, const double mu_var, const double eps_var, const int gen, const char* date) // saving powerspectrum to file for fix_r_cv=1
 {
 	stringstream buffer, filename;
 	string filename_tmp;
@@ -102,9 +138,9 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 	unsigned int i;
 
 /* write Powerspectrum, mu, rate and constants into buffer */
-	buffer << "dt\t" << "N\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\t" << "k_max\t" << "r_0\t" << "CV_0\n"
-		<< C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\t" << C_rho_k_max << "\t" << C_rate << "\t" << C_cv
-		<< "\n\n mu\t\trate\t\tsigma\t\tCV\n"
+	buffer << "dt\t" << "N_timestep\t" << "eps\t" << "tau_r\t" << "tau_s\t" << "N_neuron\t" << "N_trials\t" << "k_max\t" << "r_0\t" << "CV_0\n"
+		<< C_dt << "\t" << C_ndt << "\t" << C_eps << "\t" << C_tau_r << "\t" << C_tau_s << "\t" << C_N_neuron << "\t" << C_N_trials << "\t" << C_rho_k_max << "\t" << C_rate << "\t" << C_cv
+		<< "\n\n mu\t\trate\t\tsigma\t\tCV\t\teps\n"
 		<< mu << "\t" << rate << "\t" << sigma << "\t" << CV << "\t" << eps << "\n" << mu_var << "\t" << rate_var << "\t" << sigma_var << "\t" << CV_var << "\t" << eps_var << "\n\n rho_avg \t rho_var\n";
 
 	for (i = 0; i < C_rho_k_max; i++)
@@ -119,7 +155,7 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 		buffer << (powspe[i]) << endl;
 	}
 
-	filename << "data/" << date << "_" << C_rate << "_" << C_cv << "__" << gen << ".dat";
+	filename << "data/" << date << "_id-2_r-" << C_rate << "_cv-" << C_cv << "__" << gen << ".dat";
 	filename_tmp=filename.str();
 
 /* saving data to file from buffer */
@@ -131,13 +167,29 @@ void safe_powspe(const double* powspe, const double* rho_avg, const double* rho_
 
 int main(int argc, char *argv[])
 {
-	bool arg_mu_cv = 0;//(argc>1 ? 1 : 0);
-/*	if (argc==3)
+	bool fix_r_cv = 0, fix_none = 0;
+	unsigned short kind=1;
+	if (argc==4)
 	{
-		C_rate=atof(argv[1]);
-		C_eps=atof(argv[2]);
+		kind=static_cast<int>(atof(argv[1]));
+		switch (kind)
+			{
+				case 0:
+					{fix_none=1;
+					C_rate=atof(argv[2]);
+					C_r_0=C_rate;
+					C_mu=atof(argv[3]);break;}
+				case 1:
+					{C_rate=atof(argv[2]);
+					C_eps=atof(argv[3]);break;}
+				case 2:
+					{fix_r_cv = 1;
+					C_rate=atof(argv[2]);
+					C_cv=atof(argv[3]);break;}
+			}
+		C_D=C_rate/C_tau/4;
 	}
-*/
+
 // variables and constants for calculation
 	double *powspe_old, *powspe_new, *S_temp, *I_input;
 	double *mu_gen, *rate_gen, *sigma_gen, *CV_gen, *eps_gen, *rho_k_gen, *mu_eps, mu;
@@ -162,10 +214,16 @@ int main(int argc, char *argv[])
 		delete[] I_input;
 		fftw_destroy_plan(plan_I_input);
 
-	// generate start-powerspectrum
+	// generate start-powerspectrum and save it
 		powspe_old=new double[C_size_powspe];
-//		ornstein_PS(powspe_old, C_size_powspe, 1./(C_ndt*C_dt), C_tau, C_D); safe_powspe(powspe_old, rho_avg, rho_var, C_rate, C_tau, C_D, log(-1), log(-1), log(-1), log(-1), log(-1), 0, date);
-		whitenoise_PS(powspe_old,C_size_powspe,C_rate); safe_powspe(powspe_old, rho_avg, rho_var, C_rate, log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), 0, date);
+		ornstein_PS(powspe_old, C_size_powspe, 1./(C_ndt*C_dt), C_tau, C_D); //safe_powspe(powspe_old, rho_avg, rho_var, C_rate, C_tau, C_D, log(-1), log(-1), log(-1), log(-1), log(-1), 0, date);
+//		whitenoise_PS(powspe_old,C_size_powspe,C_rate);
+		if (fix_r_cv)
+			safe_powspe(powspe_old, rho_avg, rho_var, C_rate, log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), 0, date);
+		else if (fix_none)
+			safe_powspe(powspe_old, rho_avg, rho_var, C_rate, log(-1), log(-1), log(-1), log(-1), log(-1), 0, date);
+		else
+			safe_powspe(powspe_old, rho_avg, rho_var, C_rate, log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), log(-1), 0, date);
 		
 		powspe_new=new double[C_size_powspe];
 		dzeros(powspe_new, C_size_powspe);
@@ -173,17 +231,17 @@ int main(int argc, char *argv[])
 		for (unsigned int i_gen = 1; i_gen <= C_N_Gen; i_gen++)
 		{
 /* T */			cout << "Gen: " << i_gen << endl;
-			rho_k_gen=new double[C_rho_k_max*C_N_neuron];
-			mu_gen=new double[C_N_neuron];
-			rate_gen=new double[C_N_neuron];
-			sigma_gen=new double[C_N_neuron];
-			CV_gen=new double[C_N_neuron];
-			if (arg_mu_cv)
-				eps_gen=new double[C_N_neuron];
+			rho_k_gen=new double[C_rho_k_max*C_N_trials];
+			mu_gen=new double[C_N_trials];
+			rate_gen=new double[C_N_trials];
+			sigma_gen=new double[C_N_trials];
+			CV_gen=new double[C_N_trials];
+			if (fix_r_cv)
+				eps_gen=new double[C_N_trials];
 
-			for (unsigned int i_neuron = 0; i_neuron < C_N_neuron; i_neuron++)
+			for (unsigned int i_trial = 0; i_trial < C_N_trials; i_trial++)
 			{
-/* T */				cout << "Neuron: " << i_neuron << endl;
+/* T */				cout << "Neuron: " << i_trial << endl;
 				rand_id++;
 
 				ISI interval(C_T_max, C_rate);
@@ -196,14 +254,18 @@ int main(int argc, char *argv[])
 				fftw_destroy_plan(plan_I_input);
 
 			// define mu (and eps_diff) + create ISI-train 
-				if (arg_mu_cv)
+				if (fix_r_cv)
 				{
 					mu_eps = mu_eps_test(C_rate, C_cv, C_N_neuron, C_tau_r__dt, C_T_mu, C_tol_mu, C_dt, C_ndt_mu, I_input);
 					if (mu_eps[1]==log(-1)) {
-						i_neuron--;
+						i_trial--;
 						continue;
 					}
 					interval.lif_neuron(mu_eps[1], C_rate, mu_eps[2], C_N_neuron, C_dt, C_tau_r__dt, C_ndt, I_input);
+				}
+				else if (fix_none)
+				{
+					interval.lif_neuron(C_mu, C_rate, C_eps, C_N_neuron, C_dt, C_tau_r__dt, C_ndt, I_input);
 				}
 				else
 				{
@@ -219,18 +281,18 @@ int main(int argc, char *argv[])
 
 				for (unsigned int i_S = 0; i_S < C_size_powspe; i_S++)
 				{
-					powspe_new[i_S]+=S_temp[i_S]/C_N_neuron;
+					powspe_new[i_S]+=S_temp[i_S]/C_N_trials;
 				}			
 				delete[] S_temp;
 
 			// calculate averages of rate and mu 
-				rate_gen[i_neuron]=interval.rate();
-				sigma_gen[i_neuron]=interval.var(C_dt);
-				CV_gen[i_neuron]=interval.CV(C_dt);
-				mu_gen[i_neuron]= (arg_mu_cv ? mu_eps[1] : mu);
-				interval.calc_rho_k(C_rho_k_max,C_dt, rho_k_gen, i_neuron, interval);
-				if (arg_mu_cv)
-					eps_gen [i_neuron]= (arg_mu_cv ? mu_eps[2] : C_eps);
+				rate_gen[i_trial]=interval.rate();
+				sigma_gen[i_trial]=interval.var(C_dt);
+				CV_gen[i_trial]=interval.CV(C_dt);
+				mu_gen[i_trial]= (fix_r_cv ? mu_eps[1] : mu);
+				interval.calc_rho_k(C_rho_k_max,C_dt, rho_k_gen, i_trial, interval);
+				if (fix_r_cv)
+					eps_gen [i_trial]= (fix_r_cv ? mu_eps[2] : C_eps);
 
 			}
 
@@ -239,23 +301,27 @@ int main(int argc, char *argv[])
 			{
 				rho_avg[k]=0;	
 				rho_var[k]=0;
-				for (unsigned int i = 0; i < C_N_neuron; i++)
+				for (unsigned int i = 0; i < C_N_trials; i++)
 				{
-					rho_avg[k]+=rho_k_gen[k+i*C_rho_k_max]/C_N_neuron;
-					rho_var[k]+=pow(rho_k_gen[k+i*C_rho_k_max],2)/C_N_neuron;
+					rho_avg[k]+=rho_k_gen[k+i*C_rho_k_max]/C_N_trials;
+					rho_var[k]+=pow((rho_avg[k]-rho_k_gen[k+i*C_rho_k_max]),2)/(C_N_trials-1);
 				}
-				rho_var[k]-=pow(rho_avg[k],2);
 			}
 
 		// saving powerspectrum, rate, sigma, mu and constants to file
-			rate_avg=average(rate_gen,C_N_neuron);
-			sigma_avg=average(sigma_gen,C_N_neuron);
-			CV_avg=average(CV_gen,C_N_neuron);
-			mu_avg=average(mu_gen,C_N_neuron);
-			if (arg_mu_cv)
-				eps_avg=average(eps_gen,C_N_neuron);
+			rate_avg=average(rate_gen,C_N_trials);
+			sigma_avg=average(sigma_gen,C_N_trials);
+			CV_avg=average(CV_gen,C_N_trials);
+			mu_avg=average(mu_gen,C_N_trials);
+			if (fix_r_cv)
+				eps_avg=average(eps_gen,C_N_trials);
 
-			(arg_mu_cv ? safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, mu_avg, eps_avg, variance(rate_gen,C_N_neuron,rate_avg), variance(sigma_gen,C_N_neuron,sigma_avg), variance(CV_gen,C_N_neuron,CV_avg), variance(mu_gen,C_N_neuron,mu_avg), variance(eps_gen,C_N_neuron,eps_avg), i_gen, date) : safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, mu_avg, variance(rate_gen,C_N_neuron,rate_avg), variance(sigma_gen,C_N_neuron,sigma_avg), variance(CV_gen,C_N_neuron,CV_avg), variance(mu_gen,C_N_neuron,mu_avg), i_gen, date));
+			if (fix_r_cv)
+				safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, mu_avg, eps_avg, variance(rate_gen,C_N_trials,rate_avg), variance(sigma_gen,C_N_trials,sigma_avg), variance(CV_gen,C_N_trials,CV_avg), variance(mu_gen,C_N_trials,mu_avg), variance(eps_gen,C_N_trials,eps_avg), i_gen, date);
+			else if (fix_none)
+				safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, variance(rate_gen,C_N_trials,rate_avg), variance(sigma_gen,C_N_trials,sigma_avg), variance(CV_gen,C_N_trials,CV_avg), i_gen, date);
+			else
+				safe_powspe(powspe_new, rho_avg, rho_var, rate_avg, sigma_avg, CV_avg, mu_avg, variance(rate_gen,C_N_trials,rate_avg), variance(sigma_gen,C_N_trials,sigma_avg), variance(CV_gen,C_N_trials,CV_avg), variance(mu_gen,C_N_trials,mu_avg), i_gen, date);
 		
 		// resetting variables 
 			delete[] rho_k_gen;
@@ -263,9 +329,12 @@ int main(int argc, char *argv[])
 			delete[] sigma_gen;
 			delete[] CV_gen;
 			delete[] mu_gen;
-			if (arg_mu_cv)
+			if (fix_r_cv)
 				delete[] eps_gen;
 			cpNcl_d_arr(powspe_new, powspe_old, C_size_powspe);
+
+			if (fix_none)
+				C_rate=rate_avg;
 		}
 
 	// free all

@@ -46,24 +46,16 @@ for (unsigned int k = 0; k < k_max; k++)
 	rho_k[k+neuron*k_max]=C/sqrt(C1*C2);
 }
 
-/*	for (unsigned int k = 0; k < k_max; k++) NON-ESTIMATOR FOR RHO_K
-	{
-		tmp=0;
-		for (unsigned int i = 0; (i+k) < isi_size; i++)
-		{
-			tmp+=(isi_train.isi(i)*dt)*(isi_train.isi(i+k)*dt)/(isi_size-k);
-		}
-		rho_k[k+neuron*k_max]=(tmp-T_sqr)/variance;
-	}
-*/	
-}
-
-/*****************************************************
-
-inline double window(int i, int size) // Welch window function
-{
-	double x=1-pow((2*i/size-1),2);
-	return x;
+				/*	for (unsigned int k = 0; k < k_max; k++) NON-ESTIMATOR FOR RHO_K
+					{
+						tmp=0;
+						for (unsigned int i = 0; (i+k) < isi_size; i++)
+						{
+							tmp+=(isi_train.isi(i)*dt)*(isi_train.isi(i+k)*dt)/(isi_size-k);
+						}
+						rho_k[k+neuron*k_max]=(tmp-T_sqr)/variance;
+					}
+				*/	
 }
 
 /*****************************************************/
@@ -102,12 +94,12 @@ void powerspectrum(double* spect, const ISI& isi_train, const int N, const doubl
 		} else 
 			train[i]=0;
 	}
-//* T */		double rate=0;
-//**/		for (unsigned int i = 0; i < N; i++)
-//**/		{
-//**/			rate+=train[i]/(N-1);
-//**/		}
-//* T */		cout << "Train-rate= " << rate << endl;
+				//* T */		double rate=0;
+				//**/		for (unsigned int i = 0; i < N; i++)
+				//**/		{
+				//**/			rate+=train[i]/(N-1);
+				//**/		}
+				//* T */		cout << "Train-rate= " << rate << endl;
 
 /* fourier-transform the spiketrain */
 	fftw_execute(plan_fft);
@@ -143,7 +135,7 @@ double mutest(const double r_0, const double eps, const int N_neuron, const int 
 		mid=(max+min)/2;
 		test.lif_neuron(mid,r_0,eps,N_neuron,dt,tau_r__dt,N_step,I_diff);
 		r=test.rate();
-//* T */		cout << mid << "\t" << r << endl;
+				//* T */		cout << mid << "\t" << r << endl;
 	}
 /* T */	cout << mid << "\t" << r << endl;
 	return mid;
@@ -203,7 +195,7 @@ double* mu_eps_test(const double r_0, const double cv_0, const int N_neuron, con
 				break;				
 			}
 		}	
-//* T */		cout << mid[1] << "\t" << r << "\t" << mid[2] << "\t" << cv << endl;
+				//* T */		cout << mid[1] << "\t" << r << "\t" << mid[2] << "\t" << cv << endl;
 	}
 /* T */	cout << mid[1] << "\t" << r << "\t" << mid[2] << "\t" << cv << endl;
 		
@@ -238,31 +230,31 @@ void calc_I_diff(double* I_diff, double const* S, const double eps, const int N_
 /* fourier-transform the current */
 	fftw_execute(p);
 	
-//* T */	double mean=0;
-//* T */	double std_dev=0;
-//* T */	stringstream buffer, filename;
-//* T */	string filename_tmp;
-//* T */	ofstream file;
-//* T */	char date[18];
-//* T */	strftime(date,18, "%Y-%m-%d_%H-%M",localtime(&now));
+				//* T */	double mean=0;
+				//* T */	double std_dev=0;
+				//* T */	stringstream buffer, filename;
+				//* T */	string filename_tmp;
+				//* T */	ofstream file;
+				//* T */	char date[18];
+				//* T */	strftime(date,18, "%Y-%m-%d_%H-%M",localtime(&now));
 
 /* multiply with df */
 	for (i = 0; i < N_step; i++)
 	{
 		I_diff[i]=df*I_diff[i];
-//* T */		mean+=I_diff[i];
-//* T */		std_dev+=I_diff[i]*I_diff[i];
-//* T */		buffer << I_diff[i] << endl;
+				//* T */		mean+=I_diff[i];
+				//* T */		std_dev+=I_diff[i]*I_diff[i];
+				//* T */		buffer << I_diff[i] << endl;
 	}
-//* T */	cout << "Mean I= " << (mean/N_step) << "\t Std.dev. I= " << (std_dev/N_step) << endl;
+				//* T */	cout << "Mean I= " << (mean/N_step) << "\t Std.dev. I= " << (std_dev/N_step) << endl;
 
 	
-//* T */	filename << "data/" << date << "_Idiff_" << C_rate << "_" << C_eps << "__" << id << ".dat";
-//* T */	filename_tmp=filename.str();
+				//* T */	filename << "data/" << date << "_Idiff_" << C_rate << "_" << C_eps << "__" << id << ".dat";
+				//* T */	filename_tmp=filename.str();
 
-/* saving data to file from buffer */
-//* T */	file.open(filename_tmp.c_str());
-//* T */		file << buffer.str();
-//* T */	file.close();
+				/* saving data to file from buffer */
+				//* T */	file.open(filename_tmp.c_str());
+				//* T */		file << buffer.str();
+				//* T */	file.close();
 }
 
