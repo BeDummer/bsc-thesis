@@ -2,15 +2,26 @@
 
 // membrane time constant tau_m=10 msec = 0.01 sec
 
+#ifdef DEFINE_GLOBAL
+#	define EXTERN 
+#else
+#	define EXTERN extern
+#endif
+
+EXTERN unsigned int C_ndt, C_ndt_mu, C_N_trials, C_N_neuron, C_N_Gen, C_rho_k_max, C_tau_r__dt, C_size_powspe;
+EXTERN double C_rate, C_dt, C_eps, C_tau_r, C_tau_s, C_tau_ou, C_D_ou, C_T_max, C_T_mu, C_tol_mu, C_df, M2_PI;
+
+#undef EXTERN
+/*
 double C_rate= 1.; // firing rate [1/tau_m]=10^{2} [Hz]
 const double C_dt= .001; // timestep [tau_m]=10^{-2}[sec]
-const unsigned int C_ndt=8388608;//4194304;//2097152;//1048576;//524288;//262144;//131072;//65536; // number of timesteps in simulation
-const unsigned int C_ndt_mu=C_ndt/4;//32768;//16384; // number of timesteps in bisection
-const unsigned int C_N_trials=1000; // number of trials per generation
+const unsigned int C_ndt=1048576;//8388608;//4194304;//2097152;//1048576;//524288;//262144;//131072;//65536; // number of timesteps in simulation
+const unsigned int C_ndt_mu=C_ndt/2;//32768;//16384; // number of timesteps in bisection
+const unsigned int C_N_trials=10; // number of trials per generation
 double C_eps=1.; // weight of Input-Current
 const double C_tau_r=.1; // absolute refractory period [tau_m]=10^{-2}[sec]
 const unsigned int C_N_neuron=100 ; // number of neurons per generation
-const unsigned int C_N_Gen=5 ; // number of layers in the feedforward-network (generations)
+const unsigned int C_N_Gen=1 ; // number of layers in the feedforward-network (generations)
 
 const double C_tau_s=1. ; // time constant for synaptic filtering - 2-4 msec (cut-off frequency for powerspectrum at 1/tau_s) [tau_m]=10^{-2}[sec]
 

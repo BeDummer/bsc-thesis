@@ -1,26 +1,11 @@
 // file "cl_sim.hh"
 
-#ifndef _cl_sim_hh_
-#define _cl_sim_hh_
-
-#include <stdlib.h>
-#include <vector>
+#ifdef DEFINE_CLASS
+	#include "params.hh"
+#endif
 #include <math.h>
-#include <fftw3.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include <time.h>
-#include "params.hh"
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
+#include <vector>
 	using namespace std;
-/*#include <boost/thread.hpp>
-	using namespace boost;
-	using namespace boost::this_thread;*/
-
-
 /*******************************************************************/
 
 class ISI {
@@ -28,37 +13,33 @@ class ISI {
 		vector<int> isi_;
 		double T_max_;
 	public:
-		ISI(double T_max, double r_0):
+		ISI(double T_max):
 			T_max_(T_max)
-			{isi_.reserve(static_cast<int>(T_max*r_0*1.5));};
+			{isi_.reserve(static_cast<int>(T_max*C_rate*1.5));};
 		~ISI() {isi_.clear();};
 		int isi(int i)const {return isi_[i];};
 		double rate()const {return (isi_.size()/T_max_);};
-		double CV(const double dt)const {return (rate()*sqrt(var(dt)));};
-		double var(const double dt)const;
-		void calc_rho_k(const unsigned int, const double, double*, const unsigned int, const ISI&);
-		void lif_neuron(const double, const double, const double, const int, const double , const int, const int, const double*);
-	friend void powerspectrum(double* , const ISI&, const int, const double);
+		double CV()const {return (rate()*sqrt(var()));};
+		double var()const;
+		void calc_rho_k(double*, const unsigned int, const ISI&);
+		void lif_neuron(const double, const double*, const int);
+	friend void powerspectrum(double* , const ISI&);
 };
 
-inline double ISI::var(const double dt)const
+inline double ISI::var()const
 {
 	double T=1./ISI::rate(), tmp=0.;
 	int size=isi_.size();
 	for (unsigned int i = 0; i < size; i++)
 	{
-		tmp+=pow((T-isi_[i]*dt),2)/(size-1);
+		tmp+=(T-isi_[i]*C_dt)*(T-isi_[i]*C_dt)/(size-1);
 	}
 	return tmp;
 }
 
-void powerspectrum(double* spect, const ISI& isi_train, const int N, const double dt); // calculate the powerspectrum of realisation "isi_train"
 
-double mutest(const double r_0, const double eps_avg, const int N_neuron, const int tau_r__dt, const double T_test, const double tol_mu, const double dt, const int N, const double* I_diff); // calculate mu for given rate r_0 (bisection)
+/**************************************************************************
+void ISI::lif_neuron(const double mu, const double r_0, const double eps, const int N_neuron, const double dt, const int tau_r__dt, const int N_step, const double* I_diff); // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) --> (tau_m=1) with fire-and-reset rule (v=1 --> spike at t --> v(t+tau_r)=0) and save the interspike-interval-times
 
-double* mu_eps_test(const double r_0, const double cv_0, const int N_neuron, const double T_test, const double tol_mu, const double dt, const int tau_r__dt, const int N, const double* I_diff); // calculate mu and eps_diff for given rate r_0 and cv_0(bisection-algorithm)
-
-void calc_I_diff(double* I_diff, double const* S, const double eps, const int N_neuron, const int N_step, const double dt, const double r_0, const double tau_s, const fftw_plan p, const unsigned long int id, const time_t now); // calculate diffusion-current for one realisation
-/**************************************************************************/
-
-#endif //_cl_sim_hh_
+void ISI::calc_rho_k(const unsigned int k_max, const double dt, double* rho_k, const unsigned int neuron, const ISI& isi_train); // calculate the serial correlation coefficient rho_k until lag k_max-1
+*/
