@@ -6,7 +6,6 @@
 #include <math.h>
 #include <vector>
 	using namespace std;
-/*******************************************************************/
 
 class ISI {
 	private:
@@ -30,16 +29,8 @@ inline double ISI::var()const
 {
 	double T=1./ISI::rate(), tmp=0.;
 	int size=isi_.size();
-	for (unsigned int i = 0; i < size; i++)
-	{
+	for (unsigned int i = 0; i < size; i++){
 		tmp+=(T-isi_[i]*C_dt)*(T-isi_[i]*C_dt)/(size-1);
 	}
 	return tmp;
 }
-
-
-/**************************************************************************
-void ISI::lif_neuron(const double mu, const double r_0, const double eps, const int N_neuron, const double dt, const int tau_r__dt, const int N_step, const double* I_diff); // solve the differential equation tau_m * dv/dt = -v(t) + mu + eps*I(t) --> (tau_m=1) with fire-and-reset rule (v=1 --> spike at t --> v(t+tau_r)=0) and save the interspike-interval-times
-
-void ISI::calc_rho_k(const unsigned int k_max, const double dt, double* rho_k, const unsigned int neuron, const ISI& isi_train); // calculate the serial correlation coefficient rho_k until lag k_max-1
-*/
