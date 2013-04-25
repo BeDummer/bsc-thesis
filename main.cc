@@ -14,10 +14,12 @@
 int main(int argc, char *argv[])
 {
 // initialization of global variables
+
+	// membrane time constant tau_m=10 msec = 0.01 sec
 	C_rate= 1.; // firing rate [1/tau_m]=10^{2} [Hz]
 	C_dt= .001; // timestep [tau_m]=10^{-2}[sec]
-	C_ndt=1048576;//8388608;//4194304;//2097152;//1048576;//524288;//262144;//131072;//65536; // number of timesteps in simulation
-	C_ndt_mu=C_ndt/2;//32768;//16384; // number of timesteps in bisection
+	C_ndt=1048576;//8388608; // number of timesteps in simulation
+	C_ndt_mu=C_ndt/2; // number of timesteps in bisection
 	C_N_trials=10; // number of trials per generation
 	C_eps=1.; // weight of Input-Current
 	C_tau_r=.1; // absolute refractory period [tau_m]=10^{-2}[sec]
